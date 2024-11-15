@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Tagging Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="football-tagging-tool">
+        <section class="area create-players">
+            <h2>Create & Edit Players</h2>
+            <div class="team-section-container">
+                <div class="team-section team-a">
+                    <div class="team-header">
+                        <h3>Team A</h3>
+                        <div class="player-controls">
+                            <button id="addTeamAPlayer" class="add-player">+</button>
+                            <span id="teamAPlayerCount">0</span>
+                            <button id="removeTeamAPlayer" class="remove-player">-</button>
+                        </div>
+                    </div>
+                    <div id="teamAPlayerButtons" class="player-buttons-container"></div>
+                </div>
+                <div class="team-section team-b">
+                    <div class="team-header">
+                        <h3>Team B</h3>
+                        <div class="player-controls">
+                            <button id="addTeamBPlayer" class="add-player">+</button>
+                            <span id="teamBPlayerCount">0</span>
+                            <button id="removeTeamBPlayer" class="remove-player">-</button>
+                        </div>
+                    </div>
+                    <div id="teamBPlayerButtons" class="player-buttons-container"></div>
+                </div>
+            </div>
+            <div class="layout-controls">
+                <label>
+                    <input type="radio" name="layout" value="pid" checked> PID Layout
+                </label>
+                <label>
+                    <input type="radio" name="layout" value="manual"> Manual Layout
+                </label>
+                <label>
+                    <input type="radio" name="layout" value="jersey"> Jersey Layout
+                </label>
+            </div>
+        </section>
+
+        <section class="area basic-stats">
+            <h2>Basic Stats</h2>
+            <button id="goalBtn">Goal</button>
+            <button id="assistBtn">Assist</button>
+            <button id="shotOnTargetBtn">Shot On Target</button>
+            <button id="shotOffTargetBtn">Shot Off Target</button>
+            <button id="tackleBtn">Tackle</button>
+            <button id="interceptionBtn">Interception</button>
+            <button id="saveBtn">Save</button>
+        </section>
+
+        <section class="area complete-pass">
+            <h2>Complete Pass</h2>
+            <div class="player-buttons-container team-a-pass"></div>
+            <div class="player-buttons-container team-b-pass"></div>
+        </section>
+
+        <section class="area incomplete-pass">
+            <h2>Incomplete Pass</h2>
+            <div class="player-buttons-container team-a-pass"></div>
+            <div class="player-buttons-container team-b-pass"></div>
+        </section>
+
+        <div class="button-container">
+            <button id="undoButton">Undo</button>
+            <button id="calculateStats">Calculate Stats</button>
+            <button id="saveToHighlightsButton">Save to Highlights</button>
+        </div>
+
+        <div class="text-box-container">
+            <div class="text-box">
+                <h3>Game Log</h3>
+                <textarea id="gameLogTextBox" readonly></textarea>
+            </div>
+            <div class="text-box">
+                <h3>Game Highlights</h3>
+                <textarea id="gameHighlightsTextBox" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span id="closePopup" class="close">&times;</span>
+            <div id="popupContent"></div>
+        </div>
+    </div>
+
+    <div id="playerEditPopup" class="popup">
+        <div class="popup-content">
+            <span class="close">&times;</span>
+            <h2>Edit Player Details</h2>
+            <div class="edit-form">
+                <div class="form-group">
+                    <label for="manualId">Manual ID:</label>
+                    <input type="text" id="manualId">
+                </div>
+                <div class="form-group">
+                    <label for="jerseyId">Jersey ID:</label>
+                    <input type="text" id="jerseyId">
+                </div>
+                <button id="savePlayerDetails">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
