@@ -31,6 +31,11 @@ const popup = document.getElementById('popup');
 const playerEditPopup = document.getElementById('playerEditPopup');
 const layoutControls = document.querySelectorAll('input[name="layout"]');
 
+const matchVideoPlayer = document.getElementById('matchVideoPlayer');
+const videoIdInput = document.getElementById('videoIdInput');
+const youtubeVideoIdInput = document.getElementById('youtubeVideoIdInput');
+const updateYoutubeVideoButton = document.getElementById('updateYoutubeVideoButton');
+
 gameLogTextBox.removeAttribute('readonly');
 gameHighlightsTextBox.removeAttribute('readonly');
 
@@ -39,8 +44,6 @@ addTeamAPlayerButton.addEventListener('click', () => addPlayer('teamA'));
 addTeamBPlayerButton.addEventListener('click', () => addPlayer('teamB'));
 removeTeamAPlayerButton.addEventListener('click', () => removePlayer('teamA'));
 removeTeamBPlayerButton.addEventListener('click', () => removePlayer('teamB'));
-// document.getElementById('createPlayers').addEventListener('click', createPlayers);
-// document.getElementById('markAsOpposition').addEventListener('click', markAsOpposition);
 document.getElementById('undoButton').addEventListener('click', undoAction);
 document.getElementById('saveToHighlightsButton').addEventListener('click', showHighlightsPopup);
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
@@ -286,19 +289,6 @@ function logAction(action, uniqueId) {
     copyToClipboard();
 }
 
-// Helper function to get player display text based on current layout
-function getPlayerDisplayText(uniqueId) {
-    const details = playerDetailsMap.get(uniqueId);
-    switch (state.currentLayout) {
-        case 'manual':
-            return details.manualId;
-        case 'jersey':
-            return details.jerseyId;
-        default:
-            return details.playerId;
-    }
-}
-
 // Undo last action
 function undoAction() {
     if (actionLog.length > 0) {
@@ -326,21 +316,6 @@ function copyToClipboard() {
     });
 } 
 
-// Create player checkboxes for highlights
-function createPlayerCheckboxes() {
-    const playerIds = [...state.teamA, ...state.teamB];
-    return playerIds.map(uniqueId => {
-        const details = playerDetailsMap.get(uniqueId);
-        const displayText = getPlayerDisplayText(uniqueId);
-        return `
-            <div>
-                <input type="checkbox" id="player_${uniqueId}" class="player-checkbox" data-unique-id="${uniqueId}">
-                <label for="player_${uniqueId}">${displayText}</label>
-            </div>
-        `;
-    }).join('');
-}
-
 // Show highlights popup
 function showHighlightsPopup() {
     const content = `
@@ -358,9 +333,6 @@ function showHighlightsPopup() {
                 <div class="form-group">
                     <label for="notes">Notes:</label>
                     <textarea id="notes" placeholder="Enter notes"></textarea>
-                </div>
-                <div class="highlights-players">
-                    ${createPlayerCheckboxes()}
                 </div>
                 <div class="popup-buttons">
                     <button id="cancelHighlights">Close</button>
@@ -381,13 +353,8 @@ function showHighlightsPopup() {
         const startTimestamp = document.getElementById('startTimestamp').value;
         const endTimestamp = document.getElementById('endTimestamp').value;
         const notes = document.getElementById('notes').value;
-        const selectedPlayers = Array.from(document.querySelectorAll('.player-checkbox:checked'))
-            .map(checkbox => {
-                const uniqueId = checkbox.dataset.uniqueId;
-                return getPlayerDisplayText(uniqueId);
-            });
         
-        const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}\nPlayers selected: ${selectedPlayers.join(', ')}`;
+        const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}`;
         gameHighlightsTextBox.value += (gameHighlightsTextBox.value ? '\n\n' : '') + highlightEntry;
         popup.style.display = 'none';
         showGreenTick();
@@ -581,3 +548,13 @@ function downloadStatsAsExcel() {
     downloadLink.click();
     document.body.removeChild(downloadLink);
 }
+
+document.getElementById('updateVideoButton');
+updateYoutubeVideoButton.addEventListener('click', () => {
+    const youtubeVideoId = youtubeVideoIdInput.value.trim();
+    if (youtubeVideoId) {
+        matchVideoPlayer.src = `https://www.youtube.com/embed/${youtubeVideoId}`;
+    } else {
+        alert('Please enter a valid YouTube video ID');
+    }
+});
