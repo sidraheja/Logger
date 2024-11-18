@@ -8,94 +8,90 @@
 </head>
 <body>
     <div class="football-tagging-tool">
-        <div class="main-container">
-            <section class="area video-player">
-                <iframe id="matchVideoPlayer" src="" width="100%" height="480" allow="autoplay"></iframe>
-            </section>
-            <section class="area meta-data">
-                <div class="input-layout-container">
-                    <div class="input-container">    
-                        <div class="video-control">
-                            <label for="youtubeVideoIdInput">YouTube Video ID:</label>
-                            <input type="text" id="youtubeVideoIdInput" placeholder="Enter YouTube Video ID">
-                            <button id="updateYoutubeVideoButton">Update YouTube Video</button>
+        <div class="football-tagging-tool">
+            <div class="main-container">
+                <div class="top-container">
+                    <section class="area video-player">
+                        <iframe id="matchVideoPlayer" src="" width="100%" height="700" allow="autoplay"></iframe>
+                    </section>
+                    <div class="sidebar-container">
+                        <div class="layout-controls">
+                            <label>
+                                <input type="radio" name="layout" value="pid" checked> PID Layout
+                            </label>
+                            <label>
+                                <input type="radio" name="layout" value="manual"> Manual Layout
+                            </label>
+                            <label>
+                                <input type="radio" name="layout" value="jersey"> Jersey Layout
+                            </label>
+                        </div>
+                        <section class="area basic-stats">
+                            <h2>Basic Stats</h2>
+                            <button id="completePass">Complete Pass (A)</button>
+                            <button id="incompletePass">Incomplete Pass (D)</button>
+                            <button id="goalBtn">Goal</button>
+                            <button id="assistBtn">Assist</button>
+                            <button id="shotOnTargetBtn">Shot On Target</button>
+                            <button id="shotOffTargetBtn">Shot Off Target</button>
+                            <button id="tackleBtn">Tackle</button>
+                            <button id="interceptionBtn">Interception</button>
+                            <button id="saveBtn">Save</button>
+                        </section>
+                    </div>
+                </div>
+                <section class="area create-players">
+                    <div class="team-section-container">
+                        <div class="team-section team-a">
+                            <div class="team-header">
+                                <h3>Team A</h3>
+                                <div class="player-controls">
+                                    <button id="addTeamAPlayer" class="add-player">+</button>
+                                    <span id="teamAPlayerCount">0</span>
+                                    <button id="removeTeamAPlayer" class="remove-player">-</button>
+                                </div>
+                            </div>
+                            <div id="teamAPlayerButtons" class="player-buttons-container"></div>
+                        </div>
+                        <div class="team-section team-b">
+                            <div class="team-header">
+                                <h3>Team B</h3>
+                                <div class="player-controls">
+                                    <button id="addTeamBPlayer" class="add-player">+</button>
+                                    <span id="teamBPlayerCount">0</span>
+                                    <button id="removeTeamBPlayer" class="remove-player">-</button>
+                                </div>
+                            </div>
+                            <div id="teamBPlayerButtons" class="player-buttons-container"></div>
                         </div>
                     </div>
-                    <div class="layout-controls">
-                        <label>
-                            <input type="radio" name="layout" value="pid" checked> PID Layout
-                        </label>
-                        <label>
-                            <input type="radio" name="layout" value="manual"> Manual Layout
-                        </label>
-                        <label>
-                            <input type="radio" name="layout" value="jersey"> Jersey Layout
-                        </label>
+                </section>
+                <section class="area meta-data">
+                    <div class="input-layout-container">
+                        <div class="input-container">    
+                            <div class="video-control">
+                                <label for="youtubeVideoIdInput">YouTube Video ID:</label>
+                                <input type="text" id="youtubeVideoIdInput" placeholder="Enter YouTube Video ID">
+                                <button id="updateYoutubeVideoButton">Update YouTube Video</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </section>
-            <div class="text-box-container">
-                <div class="text-box">
-                    <h3>Game Log</h3>
-                    <textarea id="gameLogTextBox" readonly></textarea>
-                </div>
-                <div class="text-box">
-                    <h3>Game Highlights</h3>
-                    <textarea id="gameHighlightsTextBox" readonly></textarea>
+                </section>
+                <div class="text-box-container">
+                    <div class="text-box">
+                        <h3>Game Log</h3>
+                        <textarea id="gameLogTextBox" readonly></textarea>
+                    </div>
+                    <div class="text-box">
+                        <h3>Game Highlights</h3>
+                        <textarea id="gameHighlightsTextBox" readonly></textarea>
+                    </div>
                 </div>
             </div>
+            
+
         </div>
         
-        <div class="sidebar-container">
-            <section class="area create-players">
-                <div class="team-section-container">
-                    <div class="team-section team-a">
-                        <div class="team-header">
-                            <h3>Team A</h3>
-                            <div class="player-controls">
-                                <button id="addTeamAPlayer" class="add-player">+</button>
-                                <span id="teamAPlayerCount">0</span>
-                                <button id="removeTeamAPlayer" class="remove-player">-</button>
-                            </div>
-                        </div>
-                        <div id="teamAPlayerButtons" class="player-buttons-container"></div>
-                    </div>
-                    <div class="team-section team-b">
-                        <div class="team-header">
-                            <h3>Team B</h3>
-                            <div class="player-controls">
-                                <button id="addTeamBPlayer" class="add-player">+</button>
-                                <span id="teamBPlayerCount">0</span>
-                                <button id="removeTeamBPlayer" class="remove-player">-</button>
-                            </div>
-                        </div>
-                        <div id="teamBPlayerButtons" class="player-buttons-container"></div>
-                    </div>
-            </section>
-
-            <section class="area basic-stats">
-                <h2>Basic Stats</h2>
-                <button id="goalBtn">Goal</button>
-                <button id="assistBtn">Assist</button>
-                <button id="shotOnTargetBtn">Shot On Target</button>
-                <button id="shotOffTargetBtn">Shot Off Target</button>
-                <button id="tackleBtn">Tackle</button>
-                <button id="interceptionBtn">Interception</button>
-                <button id="saveBtn">Save</button>
-            </section>
-
-            <section class="area complete-pass">
-                <h2>Complete Pass</h2>
-                <div class="player-buttons-container team-a-pass"></div>
-                <div class="player-buttons-container team-b-pass"></div>
-            </section>
-
-            <section class="area incomplete-pass">
-                <h2>Incomplete Pass</h2>
-                <div class="player-buttons-container team-a-pass"></div>
-                <div class="player-buttons-container team-b-pass"></div>
-            </section>
-        </div>
     </div>
 
     <div class="button-container">

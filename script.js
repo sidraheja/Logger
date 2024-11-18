@@ -50,7 +50,7 @@ document.getElementById('calculateStats').addEventListener('click', calculateSta
 
 // Add event listeners for all basic stat buttons
 const basicStatButtons = [
-    'goalBtn', 'assistBtn', 'shotOnTargetBtn', 'shotOffTargetBtn',
+    'completePass', 'incompletePass', 'goalBtn', 'assistBtn', 'shotOnTargetBtn', 'shotOffTargetBtn',
     'tackleBtn', 'interceptionBtn', 'saveBtn'
 ].forEach(btnId => {
     document.getElementById(btnId).addEventListener('click', () => handleBasicStat(btnId));
@@ -109,23 +109,6 @@ function addPlayer(team) {
         teamAPlayerButtonsContainer.appendChild(button);
     } else {
         teamBPlayerButtonsContainer.appendChild(button);
-    }
-
-    // Add the player button to the Complete Pass and Incomplete Pass sections
-    const completePassButton = createPlayerButton(uniqueId, team === 'teamB');
-    completePassButton.addEventListener('click', () => logAction('Complete Pass', uniqueId));
-    if (team === 'teamA') {
-        teamAPassContainer.appendChild(completePassButton);
-    } else {
-        teamBPassContainer.appendChild(completePassButton);
-    }
-
-    const incompletePassButton = createPlayerButton(uniqueId, team === 'teamB');
-    incompletePassButton.addEventListener('click', () => logAction('Incomplete Pass', uniqueId));
-    if (team === 'teamA') {
-        teamAIncompletePassContainer.appendChild(incompletePassButton);
-    } else {
-        teamBIncompletePassContainer.appendChild(incompletePassButton);
     }
 
     updateTeamPlayerCount(team);
@@ -285,7 +268,7 @@ function logAction(action, uniqueId) {
     const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId}`;
     actionLog.push(logEntry);
     gameLogTextBox.value += logEntry + '\n';
-    showGreenTick();
+    showGreenTick(logEntry);
     copyToClipboard();
 }
 
@@ -527,9 +510,9 @@ function calculateStats() {
     });
 }
 
-function showGreenTick() {
+function showGreenTick(logEntry) {
     const tick = document.createElement('div');
-    tick.innerHTML = '✓';
+    tick.innerHTML = logEntry;
     tick.className = 'green-tick';
     document.body.appendChild(tick);
     setTimeout(() => document.body.removeChild(tick), 500);
@@ -549,6 +532,7 @@ function downloadStatsAsExcel() {
     document.body.removeChild(downloadLink);
 }
 
+//Video Upload
 document.getElementById('updateVideoButton');
 updateYoutubeVideoButton.addEventListener('click', () => {
     const youtubeVideoId = youtubeVideoIdInput.value.trim();
@@ -556,5 +540,14 @@ updateYoutubeVideoButton.addEventListener('click', () => {
         matchVideoPlayer.src = `https://www.youtube.com/embed/${youtubeVideoId}`;
     } else {
         alert('Please enter a valid YouTube video ID');
+    }
+});
+
+//Listen for Key Strokes
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'a' || event.key === 'A') {
+        handleBasicStat('completePass')
+    } else if (event.key === 'd' || event.key === 'D') {
+        handleBasicStat('incompletePass')
     }
 });
