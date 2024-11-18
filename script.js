@@ -398,10 +398,10 @@ function calculateStats() {
             case 'Assist':
                 stats[playerKey].assists++;
                 break;
-            case 'Complete Pass':
+            case 'CompletePass':
                 stats[playerKey].completePasses++;
                 break;
-            case 'Incomplete Pass':
+            case 'IncompletePass':
                 stats[playerKey].incompletePasses++;
                 break;
             case 'ShotOnTarget':
