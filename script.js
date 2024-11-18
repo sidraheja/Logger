@@ -613,6 +613,7 @@ document.addEventListener('keydown', (event) => {
     } else if (event.key === 'd' || event.key === 'D') {
         handleBasicStat('incompletePass')
     } else if (event.key === ' ' || event.code === 'Space') {
+        event.preventDefault(); // Prevent the page from scrolling down
         const currentState = videoPlayer.getPlayerState();
         if (currentState === 1) {
             console.log("The video is currently playing.");
