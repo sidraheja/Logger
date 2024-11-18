@@ -272,6 +272,18 @@ function logAction(action, uniqueId) {
     copyToClipboard();
 }
 
+function getPlayerDisplayText(uniqueId) {
+    const details = playerDetailsMap.get(uniqueId);
+    switch (state.currentLayout) {
+        case 'manual':
+            return details.manualId;
+        case 'jersey':
+            return details.jerseyId;
+        default:
+            return details.playerId;
+    }
+}
+
 // Undo last action
 function undoAction() {
     if (actionLog.length > 0) {
@@ -299,6 +311,20 @@ function copyToClipboard() {
     });
 } 
 
+function createPlayerCheckboxes() {
+    const playerIds = [...state.teamA, ...state.teamB];
+    return playerIds.map(uniqueId => {
+        const details = playerDetailsMap.get(uniqueId);
+        const displayText = getPlayerDisplayText(uniqueId);
+        return `
+            <div>
+                <input type="checkbox" id="player_${uniqueId}" class="player-checkbox" data-unique-id="${uniqueId}">
+                <label for="player_${uniqueId}">${displayText}</label>
+            </div>
+        `;
+    }).join('');
+}
+
 // Show highlights popup
 function showHighlightsPopup() {
     const content = `
@@ -316,6 +342,9 @@ function showHighlightsPopup() {
                 <div class="form-group">
                     <label for="notes">Notes:</label>
                     <textarea id="notes" placeholder="Enter notes"></textarea>
+                </div>
+                <div class="highlights-players">
+                    ${createPlayerCheckboxes()}
                 </div>
                 <div class="popup-buttons">
                     <button id="cancelHighlights">Close</button>
@@ -336,11 +365,16 @@ function showHighlightsPopup() {
         const startTimestamp = document.getElementById('startTimestamp').value;
         const endTimestamp = document.getElementById('endTimestamp').value;
         const notes = document.getElementById('notes').value;
+        const selectedPlayers = Array.from(document.querySelectorAll('.player-checkbox:checked'))
+            .map(checkbox => {
+                const uniqueId = checkbox.dataset.uniqueId;
+                return getPlayerDisplayText(uniqueId);
+            });
         
-        const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}`;
+        const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}\nPlayers selected: ${selectedPlayers.join(', ')}`;
         gameHighlightsTextBox.value += (gameHighlightsTextBox.value ? '\n\n' : '') + highlightEntry;
         popup.style.display = 'none';
-        showGreenTick();
+        showGreenTick(highlightEntry);
         copyToClipboard();
     });
 }
