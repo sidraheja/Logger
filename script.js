@@ -545,6 +545,12 @@ updateYoutubeVideoButton.addEventListener('click', () => {
 
 //Listen for Key Strokes
 document.addEventListener('keydown', (event) => {
+    const isInputActive = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
+
+    if (isInputActive) {
+        return; // Exit if the user is typing in a text box
+    }
+    
     if (event.key === 'a' || event.key === 'A') {
         handleBasicStat('completePass')
     } else if (event.key === 'd' || event.key === 'D') {
