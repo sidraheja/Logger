@@ -425,3 +425,20 @@ button:hover {
     color: white;
 }
 
+#logTimestampButton {
+    font-size: 0.75rem; /* Smaller font */
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    color: #555;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.form-group p {
+    font-style: italic;
+    font-size: 0.85rem; /* Smaller text */
+    color: grey;
+    margin-bottom: 8px; /* Optional spacing */
+}

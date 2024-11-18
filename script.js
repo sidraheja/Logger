@@ -11,6 +11,7 @@ const state = {
 // Player details storage - using unique IDs as keys
 const playerDetailsMap = new Map();
 let actionLog = [];
+let videoPlayer;
 
 // DOM Elements
 const teamAPlayerButtonsContainer = document.getElementById('teamAPlayerButtons');
@@ -35,6 +36,7 @@ const matchVideoPlayer = document.getElementById('matchVideoPlayer');
 const videoIdInput = document.getElementById('videoIdInput');
 const youtubeVideoIdInput = document.getElementById('youtubeVideoIdInput');
 const updateYoutubeVideoButton = document.getElementById('updateYoutubeVideoButton');
+let logTimestampButton;
 
 gameLogTextBox.removeAttribute('readonly');
 gameHighlightsTextBox.removeAttribute('readonly');
@@ -338,6 +340,8 @@ function showHighlightsPopup() {
                 <div class="form-group">
                     <label for="endTimestamp">End Timestamp:</label>
                     <input type="text" id="endTimestamp" placeholder="Enter end timestamp">
+                    <p> Click the spacebar to start the video (if paused) and click the button below to log the timestamp of the video in end time stamp</p>
+                    <button id="logTimestampButton">Log Timestamp</button>
                 </div>
                 <div class="form-group">
                     <label for="notes">Notes:</label>
@@ -360,6 +364,24 @@ function showHighlightsPopup() {
     document.getElementById('cancelHighlights').addEventListener('click', () => {
         popup.style.display = 'none';
     });
+
+    document.getElementById('logTimestampButton').addEventListener('click', () => {
+        const endTimestampInput = document.getElementById('endTimestamp');
+        if (endTimestampInput) {
+            const currentTime = videoPlayer.getCurrentTime();
+            const minutes = Math.floor(currentTime / 60);
+            const secs = Math.floor(currentTime % 60);
+            endTimestampInput.value = `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+    });
+
+    const startTimestampInput = document.getElementById('startTimestamp');
+    if (startTimestampInput) {
+        const currentTime = videoPlayer.getCurrentTime();
+        const minutes = Math.floor(currentTime / 60);
+        const secs = Math.floor(currentTime % 60);
+        startTimestampInput.value = `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
     
     document.getElementById('saveHighlights').addEventListener('click', () => {
         const startTimestamp = document.getElementById('startTimestamp').value;
@@ -571,7 +593,8 @@ document.getElementById('updateVideoButton');
 updateYoutubeVideoButton.addEventListener('click', () => {
     const youtubeVideoId = youtubeVideoIdInput.value.trim();
     if (youtubeVideoId) {
-        matchVideoPlayer.src = `https://www.youtube.com/embed/${youtubeVideoId}`;
+        videoPlayer.loadVideoById(youtubeVideoId);
+        // matchVideoPlayer.src = `https://www.youtube.com/embed/${youtubeVideoId}`;
     } else {
         alert('Please enter a valid YouTube video ID');
     }
@@ -589,5 +612,33 @@ document.addEventListener('keydown', (event) => {
         handleBasicStat('completePass')
     } else if (event.key === 'd' || event.key === 'D') {
         handleBasicStat('incompletePass')
+    } else if (event.key === ' ' || event.code === 'Space') {
+        const currentState = videoPlayer.getPlayerState();
+        if (currentState === 1) {
+            console.log("The video is currently playing.");
+            videoPlayer.pauseVideo()
+        } else if (currentState === 2) {
+            console.log("The video is currently paused.");
+            videoPlayer.playVideo();
+        }
     }
 });
+
+function onYouTubeIframeAPIReady() {
+    videoPlayer = new YT.Player('matchVideoPlayer', {
+        width: '100%',
+        height: '700',
+        videoId: '', // Start with an empty video
+        playerVars: {
+            autoplay: 1,
+            controls: 1,
+        },
+        events: {
+            onReady: onVideoPlayerReady
+        },
+    });
+}
+
+function onVideoPlayerReady(event) {
+
+}
