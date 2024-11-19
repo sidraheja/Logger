@@ -248,6 +248,9 @@ button:hover {
     font-size: 100px;
     color: rgb(255, 255, 255);
     animation: fadeInOut 1s ease-in-out;
+    background-color: rgba(0, 128, 0, 0.8); /* Green background with slight transparency */
+    padding: 20px;
+    border-radius: 10px; /* Rounded corners */
 }
 
 .stats-popup {
