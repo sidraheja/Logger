@@ -2,8 +2,12 @@
 const state = {
     teamA: [],
     teamB: [],
-    teamAName: "",
-    teamBName: "",
+    match: {
+        id: "",
+        teamA: "Team A",
+        teamB: "Team B",
+        category: ""
+    },
     selectedPlayerId: null,
     currentLayout: 'pid',
     gameLog: [],
@@ -56,18 +60,7 @@ removeTeamBPlayerButton.addEventListener('click', () => removePlayer('teamB'));
 document.getElementById('undoButton').addEventListener('click', undoAction);
 document.getElementById('saveToHighlightsButton').addEventListener('click', startStopHighlights);
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
-document.getElementById('teamANameInput').addEventListener('input', (event) => {
-    const teamName = event.target.value;
-    state.teamAName = teamName
-    console.log(`Team name updated to: ${teamName}`);
-    document.getElementById('teamANameInput').innerText = teamName; // Update the displayed team name dynamically
-});
-document.getElementById('teamBNameInput').addEventListener('input', (event) => {
-    const teamName = event.target.value;
-    state.teamBName = teamName
-    console.log(`Team name updated to: ${teamName}`);
-    document.getElementById('teamBNameInput').innerText = teamName; // Update the displayed team name dynamically
-});
+document.getElementById('setMatchDetails').addEventListener('click', showEditMatchPopup);
 // Add event listeners for all basic stat buttons
 
 const statButtonShortcuts = {
@@ -130,7 +123,8 @@ function addPlayer(team) {
         playerId: `${team[team.length - 1].toUpperCase()}${state[team].length}`,
         manualId: 'N/A',
         jerseyId: 'N/A',
-        playerName: "N/A"
+        playerName: "N/A",
+        team: team
     });
 
     const button = createPlayerButton(uniqueId, team === 'teamB');
@@ -255,6 +249,60 @@ function showEditPopup(uniqueId) {
     
     document.getElementById('savePlayerDetails').addEventListener('click', () => {
         savePlayerDetails();
+    });
+}
+
+// Show edit popup for player details
+function showEditMatchPopup(uniqueId) {
+    const matchDetails = state.match
+    console.log(matchDetails)
+
+    const content = `
+        <h2>Edit Player Details</h2>
+        <div class="edit-form">
+            <div class="form-group">
+                <label for="matchId">Match Id:</label>
+                <input type="text" id="matchId" value="${matchDetails.id}">
+            </div>
+            <div class="form-group">
+                <label for="teamAName">Team A Name:</label>
+                <input type="text" id="teamAName" value="${matchDetails.teamA}">
+            </div>
+            <div class="form-group">
+                <label for="teamBName">Team B Name:</label>
+                <input type="text" id="teamBName" value="${matchDetails.teamB}">
+            </div>
+            <div class="form-group">
+                <label for="category">Age Category:</label>
+                <input type="text" id="category" value="${matchDetails.category}">
+            </div>
+            <button id="saveMatchDetails">Save</button>
+        </div>
+    `;
+    
+    playerEditPopup.querySelector('.popup-content').innerHTML = content;
+    playerEditPopup.dataset.uniqueId = uniqueId;
+    playerEditPopup.style.display = 'flex';
+    
+    document.getElementById('saveMatchDetails').addEventListener('click', () => {
+        const matchId = document.getElementById('matchId').value;
+        const teamA = document.getElementById('teamAName').value || 'N/A';
+        const teamB = document.getElementById('teamBName').value || 'N/A';
+        const category = document.getElementById('category').value || 'N/A';
+        
+        // Update the details in the map
+        state.match = {
+            matchId,
+            teamA,
+            teamB,
+            category
+        }
+
+        document.getElementById('team-a-name').innerText = teamA;
+        document.getElementById('team-b-name').innerText = teamB;
+
+        // Close the popup
+        playerEditPopup.style.display = 'none';
     });
 }
 
@@ -482,7 +530,15 @@ function calculateStats() {
         console.log("HERE!!");
         const [action, playerInfo, timestamp] = entry.split(' - ');
         const [playerId, manualId, jerseyId, playerName] = playerInfo.split(' : ');
-        const playerKey = `${playerId} : ${manualId} : ${jerseyId}`;
+        const playerKey = `${playerId} : ${manualId} : ${jerseyId} : ${playerName}`;
+        let team = ""
+        Array.from(playerDetailsMap.values()).forEach(player => {
+            if(player.playerId == playerId && player.jerseyId == jerseyId && player.manualId == manualId && player.playerName == playerName) {
+                team = state.match.hasOwnProperty(player.team) ? state.match[player.team] : "N/A"
+            }
+        })
+
+        const ageCategory = state.match.category
 
         // Initialize player stats if not already present
         if (!stats[playerKey]) {
@@ -491,6 +547,8 @@ function calculateStats() {
                 playerId,
                 manualId,
                 jerseyId,
+                team,
+                ageCategory,
                 goals: 0,
                 assists: 0,
                 completePasses: 0,
@@ -545,6 +603,8 @@ function calculateStats() {
                     <th>Player Name</th>
                     <th>Manual ID</th>
                     <th>Jersey ID</th>
+                    <th>Team</th>
+                    <th>Age Category</th>
                     <th>Goals</th>
                     <th>Assists</th>
                     <th>Complete Passes</th>
@@ -571,6 +631,8 @@ function calculateStats() {
                 <td>${player.playerName}</td>
                 <td>${player.manualId || 'N/A'}</td>
                 <td>${player.jerseyId || 'N/A'}</td>
+                <td>${player.team || 'N/A'}</td>
+                <td>${player.ageCategory || 'N/A'}</td>
                 <td>${player.goals}</td>
                 <td>${player.assists}</td>
                 <td>${player.completePasses}</td>

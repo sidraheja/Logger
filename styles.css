@@ -144,6 +144,7 @@
     grid-column: 1 / span 2;
     display: flex;
     gap: 20px;
+    padding-top: 20px;
 }
 
 .text-box {
@@ -482,4 +483,20 @@ button:hover {
 .teamNameInput:focus {
     border-color: #007BFF; /* Blue border on focus */
     box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on focus */
+}
+
+.area.meta-data {
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping if needed for smaller screens */
+    gap: 20px; /* Optional: Adds spacing between the containers */
+    align-items: flex-start; /* Align containers at the top */
+}
+
+.input-layout-container {
+    flex: 1; /* Distribute available space equally */
+    min-width: 300px; /* Optional: Set a minimum width for smaller screens */
+    padding: 10px; /* Add some padding for better spacing */
+    background-color: #f9f9f9; /* Optional: Light background for distinction */
+    border: 1px solid #ddd; /* Optional: Border for better visibility */
+    border-radius: 5px; /* Optional: Rounded corners */
 }
