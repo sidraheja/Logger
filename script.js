@@ -267,7 +267,7 @@ function handleBasicStat(btnId) {
 // Log action with player details
 function logAction(action, uniqueId) {
     const details = playerDetailsMap.get(uniqueId);
-    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId}`;
+    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId} - ${getVideoPlayerTimeStamp()}`;
     actionLog.push(logEntry);
     gameLogTextBox.value += logEntry + '\n';
     showGreenTick(logEntry);
@@ -368,19 +368,13 @@ function showHighlightsPopup() {
     document.getElementById('logTimestampButton').addEventListener('click', () => {
         const endTimestampInput = document.getElementById('endTimestamp');
         if (endTimestampInput) {
-            const currentTime = videoPlayer.getCurrentTime();
-            const minutes = Math.floor(currentTime / 60);
-            const secs = Math.floor(currentTime % 60);
-            endTimestampInput.value = `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+            endTimestampInput.value = getVideoPlayerTimeStamp();
         }
     });
 
     const startTimestampInput = document.getElementById('startTimestamp');
     if (startTimestampInput) {
-        const currentTime = videoPlayer.getCurrentTime();
-        const minutes = Math.floor(currentTime / 60);
-        const secs = Math.floor(currentTime % 60);
-        startTimestampInput.value = `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        startTimestampInput.value = getVideoPlayerTimeStamp();
     }
     
     document.getElementById('saveHighlights').addEventListener('click', () => {
@@ -415,6 +409,13 @@ window.addEventListener('click', (e) => {
     }
 });
 
+function getVideoPlayerTimeStamp() {
+    const currentTime = videoPlayer.getCurrentTime();
+    const minutes = Math.floor(currentTime / 60);
+    const secs = Math.floor(currentTime % 60);
+    return`${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
 function calculateStats() {
     const stats = {};
     if (gameLogTextBox.value !== '') {
@@ -424,7 +425,7 @@ function calculateStats() {
     // Iterate through all logged actions
     actionLog.forEach(entry => {
         console.log("HERE!!");
-        const [action, playerInfo] = entry.split(' - ');
+        const [action, playerInfo, timestamp] = entry.split(' - ');
         const [playerId, manualId, jerseyId] = playerInfo.split(' : ');
         const playerKey = `${playerId} : ${manualId} : ${jerseyId}`;
 
