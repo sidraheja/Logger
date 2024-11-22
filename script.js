@@ -6,6 +6,11 @@ const state = {
     currentLayout: 'pid',
     gameLog: [],
     nextUniqueId: 1, // Counter for generating unique IDs
+    highlights: {
+        start: "",
+        stop: "",
+        currentState: "START"
+    }
 };
 
 // Player details storage - using unique IDs as keys
@@ -47,7 +52,24 @@ addTeamBPlayerButton.addEventListener('click', () => addPlayer('teamB'));
 removeTeamAPlayerButton.addEventListener('click', () => removePlayer('teamA'));
 removeTeamBPlayerButton.addEventListener('click', () => removePlayer('teamB'));
 document.getElementById('undoButton').addEventListener('click', undoAction);
-document.getElementById('saveToHighlightsButton').addEventListener('click', showHighlightsPopup);
+document.getElementById('saveToHighlightsButton').addEventListener('click', () => {
+    const button = document.getElementById('saveToHighlightsButton');
+
+    if (state.highlights.currentState == "START") {
+        console.log("Start")
+        button.innerText = "Stop Highlight";
+        button.style.backgroundColor = "#0000FF"; // Change color to red
+        state.highlights.start = getVideoPlayerTimeStamp()
+        state.highlights.currentState = "STOP"
+    } else {
+        button.innerText = "Save Highlight";
+        state.highlights.currentState = "START"
+        button.style.backgroundColor = "#4CAF50"; // Change color to red
+        state.highlights.stop = getVideoPlayerTimeStamp()
+        videoPlayer.pauseVideo()
+        showHighlightsPopup()
+    }
+});
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
 
 // Add event listeners for all basic stat buttons
@@ -348,12 +370,6 @@ function showHighlightsPopup() {
                     <input type="text" id="startTimestamp" placeholder="Enter start timestamp">
                 </div>
                 <div class="form-group">
-                    <label for="endTimestamp">End Timestamp:</label>
-                    <input type="text" id="endTimestamp" placeholder="Enter end timestamp">
-                    <p> Click the spacebar to start the video (if paused) and click the button below to log the timestamp of the video in end time stamp</p>
-                    <button id="logTimestampButton">Log Timestamp</button>
-                </div>
-                <div class="form-group">
                     <label for="notes">Notes:</label>
                     <textarea id="notes" placeholder="Enter notes"></textarea>
                 </div>
@@ -372,19 +388,19 @@ function showHighlightsPopup() {
     popup.style.display = 'flex';
     
     document.getElementById('cancelHighlights').addEventListener('click', () => {
+        state.highlights.stop = ""
+        state.highlights.start = ""
         popup.style.display = 'none';
     });
 
-    document.getElementById('logTimestampButton').addEventListener('click', () => {
-        const endTimestampInput = document.getElementById('endTimestamp');
-        if (endTimestampInput) {
-            endTimestampInput.value = getVideoPlayerTimeStamp();
-        }
-    });
+    const endTimestampInput = document.getElementById('endTimestamp');
+    if (endTimestampInput) {
+        endTimestampInput.value = state.highlights.stop;
+    }
 
     const startTimestampInput = document.getElementById('startTimestamp');
     if (startTimestampInput) {
-        startTimestampInput.value = getVideoPlayerTimeStamp();
+        startTimestampInput.value = state.highlights.stop;
     }
     
     document.getElementById('saveHighlights').addEventListener('click', () => {
@@ -400,6 +416,8 @@ function showHighlightsPopup() {
         const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}\nPlayers selected: ${selectedPlayers.join(', ')}`;
         gameHighlightsTextBox.value += (gameHighlightsTextBox.value ? '\n\n' : '') + highlightEntry;
         popup.style.display = 'none';
+        state.highlights.stop = ""
+        state.highlights.start = ""
         showGreenTick(highlightEntry);
         copyToClipboard();
     });
