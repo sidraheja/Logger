@@ -52,24 +52,7 @@ addTeamBPlayerButton.addEventListener('click', () => addPlayer('teamB'));
 removeTeamAPlayerButton.addEventListener('click', () => removePlayer('teamA'));
 removeTeamBPlayerButton.addEventListener('click', () => removePlayer('teamB'));
 document.getElementById('undoButton').addEventListener('click', undoAction);
-document.getElementById('saveToHighlightsButton').addEventListener('click', () => {
-    const button = document.getElementById('saveToHighlightsButton');
-
-    if (state.highlights.currentState == "START") {
-        console.log("Start")
-        button.innerText = "Stop Highlight";
-        button.style.backgroundColor = "#0000FF"; // Change color to red
-        state.highlights.start = getVideoPlayerTimeStamp()
-        state.highlights.currentState = "STOP"
-    } else {
-        button.innerText = "Save Highlight";
-        state.highlights.currentState = "START"
-        button.style.backgroundColor = "#4CAF50"; // Change color to red
-        state.highlights.stop = getVideoPlayerTimeStamp()
-        videoPlayer.pauseVideo()
-        showHighlightsPopup()
-    }
-});
+document.getElementById('saveToHighlightsButton').addEventListener('click', startStopHighlights);
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
 
 // Add event listeners for all basic stat buttons
@@ -359,6 +342,25 @@ function createPlayerCheckboxes() {
     }).join('');
 }
 
+function startStopHighlights() {
+    const button = document.getElementById('saveToHighlightsButton');
+
+    if (state.highlights.currentState == "START") {
+        console.log("Start")
+        button.innerText = "Stop Highlight";
+        button.style.backgroundColor = "#0000FF"; // Change color to red
+        state.highlights.start = getVideoPlayerTimeStamp()
+        state.highlights.currentState = "STOP"
+    } else {
+        button.innerText = "Save Highlight";
+        state.highlights.currentState = "START"
+        button.style.backgroundColor = "#4CAF50"; // Change color to red
+        state.highlights.stop = getVideoPlayerTimeStamp()
+        videoPlayer.pauseVideo()
+        showHighlightsPopup()
+    }
+}
+
 // Show highlights popup
 function showHighlightsPopup() {
     const content = `
@@ -636,13 +638,11 @@ document.addEventListener('keydown', (event) => {
     if (isInputActive) {
         return; // Exit if the user is typing in a text box
     }
-    
-    console.log(event.key.toUpperCase())
-    console.log(statButtonShortcuts)
-    console.log(statButtonShortcuts.hasOwnProperty(event.key.toUpperCase()))
 
     if (statButtonShortcuts.hasOwnProperty(event.key.toUpperCase())) {
         handleBasicStat(statButtonShortcuts[event.key.toUpperCase()])
+    } else if(event.key.toUpperCase() == 'H') {
+        startStopHighlights()
     } else if (event.key === ' ' || event.code === 'Space') {
         event.preventDefault(); // Prevent the page from scrolling down
         const currentState = videoPlayer.getPlayerState();
