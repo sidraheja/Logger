@@ -51,10 +51,20 @@ document.getElementById('saveToHighlightsButton').addEventListener('click', show
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
 
 // Add event listeners for all basic stat buttons
-const basicStatButtons = [
-    'completePass', 'incompletePass', 'goalBtn', 'assistBtn', 'shotOnTargetBtn', 'shotOffTargetBtn',
-    'tackleBtn', 'interceptionBtn', 'saveBtn'
-].forEach(btnId => {
+
+const statButtonShortcuts = {
+    "A": 'completePass', 
+    "D" : 'incompletePass', 
+    "S": 'goalBtn', 
+    "Q": 'assistBtn', 
+    "W": 'shotOnTargetBtn', 
+    "E": 'shotOffTargetBtn',
+    "Z": 'tackleBtn', 
+    "X": 'interceptionBtn', 
+    "C": 'saveBtn'
+}
+
+const basicStatButtons = Object.values(statButtonShortcuts).forEach(btnId => {
     document.getElementById(btnId).addEventListener('click', () => handleBasicStat(btnId));
 });
 
@@ -609,10 +619,12 @@ document.addEventListener('keydown', (event) => {
         return; // Exit if the user is typing in a text box
     }
     
-    if (event.key === 'a' || event.key === 'A') {
-        handleBasicStat('completePass')
-    } else if (event.key === 'd' || event.key === 'D') {
-        handleBasicStat('incompletePass')
+    console.log(event.key.toUpperCase())
+    console.log(statButtonShortcuts)
+    console.log(statButtonShortcuts.hasOwnProperty(event.key.toUpperCase()))
+
+    if (statButtonShortcuts.hasOwnProperty(event.key.toUpperCase())) {
+        handleBasicStat(statButtonShortcuts[event.key.toUpperCase()])
     } else if (event.key === ' ' || event.code === 'Space') {
         event.preventDefault(); // Prevent the page from scrolling down
         const currentState = videoPlayer.getPlayerState();
