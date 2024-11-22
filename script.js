@@ -2,6 +2,8 @@
 const state = {
     teamA: [],
     teamB: [],
+    teamAName: "",
+    teamBName: "",
     selectedPlayerId: null,
     currentLayout: 'pid',
     gameLog: [],
@@ -54,7 +56,18 @@ removeTeamBPlayerButton.addEventListener('click', () => removePlayer('teamB'));
 document.getElementById('undoButton').addEventListener('click', undoAction);
 document.getElementById('saveToHighlightsButton').addEventListener('click', startStopHighlights);
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
-
+document.getElementById('teamANameInput').addEventListener('input', (event) => {
+    const teamName = event.target.value;
+    state.teamAName = teamName
+    console.log(`Team name updated to: ${teamName}`);
+    document.getElementById('teamANameInput').innerText = teamName; // Update the displayed team name dynamically
+});
+document.getElementById('teamBNameInput').addEventListener('input', (event) => {
+    const teamName = event.target.value;
+    state.teamBName = teamName
+    console.log(`Team name updated to: ${teamName}`);
+    document.getElementById('teamBNameInput').innerText = teamName; // Update the displayed team name dynamically
+});
 // Add event listeners for all basic stat buttons
 
 const statButtonShortcuts = {
@@ -116,7 +129,8 @@ function addPlayer(team) {
     playerDetailsMap.set(uniqueId, {
         playerId: `${team[team.length - 1].toUpperCase()}${state[team].length}`,
         manualId: 'N/A',
-        jerseyId: 'N/A'
+        jerseyId: 'N/A',
+        playerName: "N/A"
     });
 
     const button = createPlayerButton(uniqueId, team === 'teamB');
@@ -227,6 +241,10 @@ function showEditPopup(uniqueId) {
                 <label for="jerseyId">Jersey ID:</label>
                 <input type="text" id="jerseyId" value="${details.jerseyId}">
             </div>
+            <div class="form-group">
+                <label for="playerName">Player Name:</label>
+                <input type="text" id="playerName" value="${details.playerName}">
+            </div>
             <button id="savePlayerDetails">Save</button>
         </div>
     `;
@@ -246,12 +264,14 @@ function savePlayerDetails() {
     const playerId = document.getElementById('playerId').value;
     const manualId = document.getElementById('manualId').value || 'N/A';
     const jerseyId = document.getElementById('jerseyId').value || 'N/A';
+    const playerName = document.getElementById('playerName').value || 'N/A';
     
     // Update the details in the map
     playerDetailsMap.set(uniqueId, {
         playerId,
         manualId,
-        jerseyId
+        jerseyId,
+        playerName
     });
     
     // Update all buttons to reflect changes
@@ -282,7 +302,7 @@ function handleBasicStat(btnId) {
 // Log action with player details
 function logAction(action, uniqueId) {
     const details = playerDetailsMap.get(uniqueId);
-    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId} - ${getVideoPlayerTimeStamp()}`;
+    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId} : ${details.playerName} - ${getVideoPlayerTimeStamp()}`;
     actionLog.push(logEntry);
     gameLogTextBox.value += logEntry + '\n';
     showGreenTick(logEntry);
@@ -461,12 +481,13 @@ function calculateStats() {
     actionLog.forEach(entry => {
         console.log("HERE!!");
         const [action, playerInfo, timestamp] = entry.split(' - ');
-        const [playerId, manualId, jerseyId] = playerInfo.split(' : ');
+        const [playerId, manualId, jerseyId, playerName] = playerInfo.split(' : ');
         const playerKey = `${playerId} : ${manualId} : ${jerseyId}`;
 
         // Initialize player stats if not already present
         if (!stats[playerKey]) {
             stats[playerKey] = {
+                playerName,
                 playerId,
                 manualId,
                 jerseyId,
@@ -521,6 +542,7 @@ function calculateStats() {
             <thead>
                 <tr>
                     <th>Player</th>
+                    <th>Player Name</th>
                     <th>Manual ID</th>
                     <th>Jersey ID</th>
                     <th>Goals</th>
@@ -546,6 +568,7 @@ function calculateStats() {
         statsTable += `
             <tr>
                 <td>${player.playerId}</td>
+                <td>${player.playerName}</td>
                 <td>${player.manualId || 'N/A'}</td>
                 <td>${player.jerseyId || 'N/A'}</td>
                 <td>${player.goals}</td>

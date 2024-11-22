@@ -40,6 +40,7 @@
     display: flex;
     flex-wrap: wrap; /* Allow buttons to wrap */
     gap: 5px; /* Padding between player buttons */
+    padding-top: 10px;
 }
 
 .main-container {
@@ -465,4 +466,20 @@ button:hover {
 .saveToHighlightsButton:hover {
     background-color: #0056b3; /* Slightly darker blue on hover */
     box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on hover */
+}
+
+.teamNameInput {
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Shadow for visibility */
+    outline: none; /* Remove default outline */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.teamNameInput:focus {
+    border-color: #007BFF; /* Blue border on focus */
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on focus */
 }
