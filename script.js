@@ -347,12 +347,13 @@ function startStopHighlights() {
 
     if (state.highlights.currentState == "START") {
         console.log("Start")
-        button.innerText = "Stop Highlight";
+        button.innerText = "Stop Highlight (H)";
         button.style.backgroundColor = "#0000FF"; // Change color to red
         state.highlights.start = getVideoPlayerTimeStamp()
         state.highlights.currentState = "STOP"
     } else {
-        button.innerText = "Save Highlight";
+        console.log("Stop")
+        button.innerText = "Save Highlight (H)";
         state.highlights.currentState = "START"
         button.style.backgroundColor = "#4CAF50"; // Change color to red
         state.highlights.stop = getVideoPlayerTimeStamp()
@@ -370,6 +371,10 @@ function showHighlightsPopup() {
                 <div class="form-group">
                     <label for="startTimestamp">Start Timestamp:</label>
                     <input type="text" id="startTimestamp" placeholder="Enter start timestamp">
+                </div>
+                <div class="form-group">
+                    <label for="endTimestamp">Stop Timestamp:</label>
+                    <input type="text" id="endTimestamp" placeholder="Enter end timestamp">
                 </div>
                 <div class="form-group">
                     <label for="notes">Notes:</label>
