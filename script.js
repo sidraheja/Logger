@@ -480,7 +480,7 @@ function showHighlightsPopup() {
 
     const startTimestampInput = document.getElementById('startTimestamp');
     if (startTimestampInput) {
-        startTimestampInput.value = state.highlights.stop;
+        startTimestampInput.value = state.highlights.start;
     }
     
     document.getElementById('saveHighlights').addEventListener('click', () => {
