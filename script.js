@@ -516,9 +516,10 @@ window.addEventListener('click', (e) => {
 
 function getVideoPlayerTimeStamp() {
     const currentTime = videoPlayer.getCurrentTime();
-    const minutes = Math.floor(currentTime / 60);
+    const hours = Math.floor(currentTime / 3600);
+    const minutes = Math.floor((currentTime % 3600) / 60);
     const secs = Math.floor(currentTime % 60);
-    return`${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
 function calculateStats() {
@@ -650,7 +651,7 @@ function calculateStats() {
                 <td>${player.assists}</td>
                 <td>${player.completePasses}</td>
                 <td>${player.incompletePasses}</td>
-                <td>${passingAccuracy}%</td>
+                <td>${passingAccuracy}</td>
                 <td>${player.totalShots}</td>
                 <td>${player.shotsOnTarget}</td>
                 <td>${player.tackles}</td>
