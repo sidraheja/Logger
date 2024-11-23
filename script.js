@@ -688,10 +688,7 @@ function calculateStats() {
 
     // Add event listener to the download button
     statsPopup.querySelector('.download-button').addEventListener('click', () => {
-        console.log("export")
-        exportTablesToExcel();
-        writeToTxtFile(actionLog, 'log.txt')
-        writeToTxtFile(highlightsLog, 'highlights.txt')
+        exportTablesToZip()
     });
 
     // Close the popup when the close button is clicked
@@ -966,7 +963,7 @@ function generateMatchStatsTable(playerStats) {
     `;
 }
 
-function exportTablesToExcel() {
+function exportTablesToZip() {
     // Parse the player stats table
     const playerStatsTable = document.querySelector('.stats-container table');
     const playerStatsArray = parseHTMLTableToArray(playerStatsTable.outerHTML);
@@ -975,7 +972,7 @@ function exportTablesToExcel() {
     const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
     const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
 
-    // Create a new workbook
+    // Create a new workbook for Excel
     const wb = XLSX.utils.book_new();
 
     // Convert arrays to worksheets
@@ -986,44 +983,34 @@ function exportTablesToExcel() {
     XLSX.utils.book_append_sheet(wb, playerStatsSheet, "Player Stats");
     XLSX.utils.book_append_sheet(wb, matchStatsSheet, "Match Stats");
 
-    // Export the workbook as an .xlsx file
-    XLSX.writeFile(wb, "stats_and_match_data.xlsx");
+    // Generate the Excel file as a binary string
+    const excelData = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+    const actionLogString = actionLog.join("\n")
+    const highlightsLogString = highlightsLog.join("\n");
+
+    // Create a new ZIP file
+    const zip = new JSZip();
+
+    const name = `${state.match.teamA} - ${state.match.teamB} - ${state.match.id}`
+    // Add the Excel file to the ZIP
+    zip.file(`${name}.xlsx`, excelData);
+
+    // Add the text file to the ZIP
+    zip.file("logs.txt", actionLogString);
+    zip.file("highlights.txt", highlightsLogString);
+
+    // Generate the ZIP file and trigger the download
+    zip.generateAsync({ type: "blob" }).then(function (content) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = `${name}.zip`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        console.log("ZIP file has been downloaded.");
+    });
 }
 
-function writeToTxtFile(list, filename) {
-    // Check if the input list is valid
-    if (!Array.isArray(list) || list.some(item => typeof item !== 'string')) {
-        console.error("Input must be an array of strings.");
-        return;
-    }
-
-    // Convert the array of strings into a single string with each item on a new line
-    const content = list.join('\n');
-
-    // Log the content to verify it
-    console.log("File Content:", content);
-
-    // Create a Blob with the content
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-
-    // Log the Blob to ensure it's correctly created
-    console.log("Blob Size:", blob.size, "Blob Type:", blob.type);
-
-    // Create a temporary anchor element
-    const a = document.createElement('a');
-    a.href = window.URL.createObjectURL(blob); // Create an object URL for the Blob
-    a.download = filename; // Set the desired filename
-
-    // Append the anchor to the body and trigger the download
-    document.body.appendChild(a);
-    a.click();
-
-    // Clean up the anchor and revoke the object URL
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(a.href);
-
-    console.log(`File "${filename}" has been downloaded.`);
-}
 
 
 
