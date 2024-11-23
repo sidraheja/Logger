@@ -284,14 +284,14 @@ function showEditMatchPopup(uniqueId) {
     playerEditPopup.style.display = 'flex';
     
     document.getElementById('saveMatchDetails').addEventListener('click', () => {
-        const matchId = document.getElementById('matchId').value;
+        const id = document.getElementById('matchId').value;
         const teamA = document.getElementById('teamAName').value || 'N/A';
         const teamB = document.getElementById('teamBName').value || 'N/A';
         const category = document.getElementById('category').value || 'N/A';
         
         // Update the details in the map
         state.match = {
-            matchId,
+            id,
             teamA,
             teamB,
             category
