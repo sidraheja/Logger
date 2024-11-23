@@ -761,6 +761,14 @@ document.addEventListener('keydown', (event) => {
             console.log("The video is currently paused.");
             videoPlayer.playVideo();
         }
+    } else if (event.key === 'ArrowRight') { // Check if the right arrow key is pressed
+        const currentTime = videoPlayer.getCurrentTime(); // Get the current playback time
+        const newTime = currentTime + 3; // Add 3 seconds to the current time
+        videoPlayer.seekTo(newTime, true); // Seek to the new time
+    } else if (event.key === 'ArrowLeft') { // Check if the right arrow key is pressed
+        const currentTime = videoPlayer.getCurrentTime(); // Get the current playback time
+        const newTime = currentTime - 3; // Add 3 seconds to the current time
+        videoPlayer.seekTo(newTime, true); // Seek to the new time
     }
 });
 
