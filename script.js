@@ -68,6 +68,7 @@ const statButtonShortcuts = {
     "A": 'completePass', 
     "D" : 'incompletePass', 
     "S": 'goalBtn', 
+    "O": 'ownGoalBtn', 
     "Q": 'assistBtn', 
     "W": 'shotOnTargetBtn', 
     "E": 'shotOffTargetBtn',
@@ -567,7 +568,8 @@ function calculateStats() {
                 shotsOnTarget: 0,
                 tackles: 0,
                 interceptions: 0,
-                saves: 0
+                saves: 0,
+                ownGoals: 0
             };
         }
 
@@ -575,6 +577,9 @@ function calculateStats() {
         switch (action) {
             case 'Goal':
                 stats[playerKey].goals++;
+                break;
+            case "OwnGoal":
+                stats[playerKey].ownGoals++;
                 break;
             case 'Assist':
                 stats[playerKey].assists++;
@@ -619,6 +624,7 @@ function calculateStats() {
                     <th>Team</th>
                     <th>Age Category</th>
                     <th>Goals</th>
+                    <th>Own Goals</th>
                     <th>Assists</th>
                     <th>Complete Passes</th>
                     <th>Incomplete Passes</th>
@@ -648,6 +654,7 @@ function calculateStats() {
                 <td>${player.team || 'N/A'}</td>
                 <td>${player.ageCategory || 'N/A'}</td>
                 <td>${player.goals}</td>
+                <td>${player.ownGoals}</td>
                 <td>${player.assists}</td>
                 <td>${player.completePasses}</td>
                 <td>${player.incompletePasses}</td>
@@ -799,6 +806,7 @@ function calculateMatchStats(stats) {
         if (!teamStats[team]) {
             teamStats[team] = {
                 goals: 0,
+                ownGoals: 0,
                 possession: 0,
                 completePasses: 0,
                 incompletePasses: 0,
@@ -818,6 +826,7 @@ function calculateMatchStats(stats) {
         const {
             team,
             goals,
+            ownGoals,
             completePasses,
             incompletePasses,
             totalShots,
@@ -829,6 +838,7 @@ function calculateMatchStats(stats) {
 
         // Add stats to the corresponding team
         teamStats[team].goals += goals;
+        teamStats[team].ownGoals += ownGoals;
         teamStats[team].completePasses += completePasses;
         teamStats[team].incompletePasses += incompletePasses;
         teamStats[team].totalShots += totalShots;
@@ -845,6 +855,25 @@ function calculateMatchStats(stats) {
             teamStats[team].playersWithPasses += 1;
         }
     }
+
+    if (teamStats[state.match.teamA] && teamStats[state.match.teamA].ownGoals > 0) {
+        if(!teamStats[state.match.teamB]) {
+            teamStats[state.match.teamB] = {
+                goals: 0
+            }
+        }
+        teamStats[state.match.teamB].goals +=  teamStats[state.match.teamA].ownGoals 
+    }
+
+    if (teamStats[state.match.teamB] && teamStats[state.match.teamB].ownGoals > 0) {
+        if(!teamStats[state.match.teamA]) {
+            teamStats[state.match.teamA] = {
+                goals: 0
+            }
+        }
+        teamStats[state.match.teamA].goals +=  teamStats[state.match.teamB].ownGoals 
+    }
+
 
     // Calculate possession and average passing accuracy
     const totalCompletePasses = Object.values(teamStats).reduce((sum, team) => sum + team.completePasses, 0);
