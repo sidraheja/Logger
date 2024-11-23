@@ -630,8 +630,9 @@ function calculateStats() {
     // Populate the stats table
     Object.values(stats).forEach(player => {
         const passingAccuracy = player.completePasses + player.incompletePasses > 0
-            ? ((player.completePasses / (player.completePasses + player.incompletePasses)) * 100).toFixed(2)
+            ? `${((player.completePasses / (player.completePasses + player.incompletePasses)) * 100).toFixed(2)}%`
             : 'N/A';
+
         statsTable += `
             <tr>
                 <td>${player.playerId}</td>
@@ -844,12 +845,11 @@ function calculateMatchStats(stats) {
             ).toFixed(2);
         } else {
             teamStats[team].possession = 'N/A';
-        }
-
+        }        
         if (teamStats[team].playersWithPasses > 0) {
-            teamStats[team].averagePassingAccuracy = (
+            teamStats[team].averagePassingAccuracy = `${(
                 teamStats[team].passingAccuracySum / teamStats[team].playersWithPasses
-            ).toFixed(2);
+            ).toFixed(2)}%`;
         } else {
             teamStats[team].averagePassingAccuracy = 'N/A';
         }
@@ -880,7 +880,8 @@ function generateMatchStatsTable(playerStats) {
             shotsOnTarget: 0,
             tackles: 0,
             interceptions: 0,
-            saves: 0
+            saves: 0,
+            averagePassingAccuracy: 'N/A'
         }
     }
 
@@ -896,7 +897,8 @@ function generateMatchStatsTable(playerStats) {
             shotsOnTarget: 0,
             tackles: 0,
             interceptions: 0,
-            saves: 0
+            saves: 0,
+            averagePassingAccuracy: 'N/A'
         }
     }
 
@@ -923,8 +925,8 @@ function generateMatchStatsTable(playerStats) {
                 </tr>
                 <tr>
                     <td>Cumulative Passing Accuracy</td>
-                    <td>${matchStats[teamA].averagePassingAccuracy}%</td>
-                    <td>${matchStats[teamB].averagePassingAccuracy}%</td>
+                    <td>${matchStats[teamA].averagePassingAccuracy}</td>
+                    <td>${matchStats[teamB].averagePassingAccuracy}</td>
                 </tr>
                 <tr>
                     <td>Total Shots</td>
