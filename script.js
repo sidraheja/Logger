@@ -682,7 +682,7 @@ function calculateStats() {
 
     // Add event listener to the download button
     statsPopup.querySelector('.download-button').addEventListener('click', () => {
-        downloadStatsAsExcel();
+        exportTablesToExcel();
     });
 
     // Close the popup when the close button is clicked
@@ -954,4 +954,36 @@ function generateMatchStatsTable(playerStats) {
             </tbody>
         </table>
     `;
+}
+
+function exportTablesToExcel() {
+    // Parse the player stats table
+    const playerStatsTable = document.querySelector('.stats-container table');
+    const playerStatsArray = parseHTMLTableToArray(playerStatsTable.outerHTML);
+
+    // Parse the match stats table
+    const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
+    const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
+
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+
+    // Convert arrays to worksheets
+    const playerStatsSheet = XLSX.utils.aoa_to_sheet(playerStatsArray);
+    const matchStatsSheet = XLSX.utils.aoa_to_sheet(matchStatsArray);
+
+    // Append sheets to the workbook
+    XLSX.utils.book_append_sheet(wb, playerStatsSheet, "Player Stats");
+    XLSX.utils.book_append_sheet(wb, matchStatsSheet, "Match Stats");
+
+    // Export the workbook as an .xlsx file
+    XLSX.writeFile(wb, "stats_and_match_data.xlsx");
+}
+
+// Helper to parse HTML tables into arrays
+function parseHTMLTableToArray(htmlTable) {
+    const table = document.createElement('div');
+    table.innerHTML = htmlTable.trim();
+    const rows = Array.from(table.querySelectorAll('tr'));
+    return rows.map(row => Array.from(row.querySelectorAll('td, th')).map(cell => cell.textContent));
 }
