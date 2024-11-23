@@ -136,6 +136,8 @@ function addPlayer(team) {
         teamBPlayerButtonsContainer.appendChild(button);
     }
 
+    console.log(state)
+
     updateTeamPlayerCount(team);
 }
 
@@ -313,13 +315,16 @@ function savePlayerDetails() {
     const manualId = document.getElementById('manualId').value || 'N/A';
     const jerseyId = document.getElementById('jerseyId').value || 'N/A';
     const playerName = document.getElementById('playerName').value || 'N/A';
+    playerDetails = playerDetailsMap.get(uniqueId)
+    team = playerDetails.team
     
     // Update the details in the map
     playerDetailsMap.set(uniqueId, {
         playerId,
         manualId,
         jerseyId,
-        playerName
+        playerName,
+        team
     });
     
     // Update all buttons to reflect changes
@@ -350,7 +355,7 @@ function handleBasicStat(btnId) {
 // Log action with player details
 function logAction(action, uniqueId) {
     const details = playerDetailsMap.get(uniqueId);
-    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId} : ${details.playerName} - ${getVideoPlayerTimeStamp()}`;
+    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId} : ${details.playerName} : ${uniqueId} - ${getVideoPlayerTimeStamp()}`;
     actionLog.push(logEntry);
     gameLogTextBox.value += logEntry + '\n';
     showGreenTick(logEntry);
@@ -524,21 +529,20 @@ function calculateStats() {
     if (gameLogTextBox.value !== '') {
          actionLog = gameLogTextBox.value.split('\n').filter(line => line.trim() !== '');
     }
-    console.log(actionLog);
+
     // Iterate through all logged actions
     actionLog.forEach(entry => {
         console.log("HERE!!");
         const [action, playerInfo, timestamp] = entry.split(' - ');
-        const [playerId, manualId, jerseyId, playerName] = playerInfo.split(' : ');
-        const playerKey = `${playerId} : ${manualId} : ${jerseyId} : ${playerName}`;
-        let team = ""
-        Array.from(playerDetailsMap.values()).forEach(player => {
-            if(player.playerId == playerId && player.jerseyId == jerseyId && player.manualId == manualId && player.playerName == playerName) {
-                team = state.match.hasOwnProperty(player.team) ? state.match[player.team] : "N/A"
-            }
-        })
-
+        let [playerId, manualId, jerseyId, playerName, uniqueId] = playerInfo.split(' : ');
+        const playerKey = `${uniqueId}`;
+        player = playerDetailsMap.get(uniqueId)
+        const team = state.match[player.team] ? state.match[player.team] : player.team
         const ageCategory = state.match.category
+        playerId = player.playerId
+        manualId = player.manualId
+        jerseyId = player.jerseyId
+        playerName = player.playerName
 
         // Initialize player stats if not already present
         if (!stats[playerKey]) {
@@ -594,6 +598,9 @@ function calculateStats() {
         }
     });
 
+    // Calculate team stats
+    const matchStatsTable = generateMatchStatsTable(stats);
+    
     // Generate the stats table
     let statsTable = `
         <table>
@@ -664,6 +671,10 @@ function calculateStats() {
             </div>
             <div class="stats-container">
                 ${statsTable}
+            </div>
+
+            <div class="stats-container">
+                ${matchStatsTable}
             </div>
         </div>
     `;
@@ -763,4 +774,184 @@ function onYouTubeIframeAPIReady() {
 
 function onVideoPlayerReady(event) {
 
+}
+
+function calculateMatchStats(stats) {
+    // Initialize team stats
+    teamStats = {};
+    for (const playerKey in stats) {
+        const { team } = stats[playerKey];
+        if (!teamStats[team]) {
+            teamStats[team] = {
+                goals: 0,
+                possession: 0,
+                completePasses: 0,
+                incompletePasses: 0,
+                passingAccuracySum: 0,
+                playersWithPasses: 0, // Used for calculating average passing accuracy
+                totalShots: 0,
+                shotsOnTarget: 0,
+                tackles: 0,
+                interceptions: 0,
+                saves: 0
+            };
+        }
+    }
+
+    // Aggregate stats for each team
+    for (const playerKey in stats) {
+        const {
+            team,
+            goals,
+            completePasses,
+            incompletePasses,
+            totalShots,
+            shotsOnTarget,
+            tackles,
+            interceptions,
+            saves
+        } = stats[playerKey];
+
+        // Add stats to the corresponding team
+        teamStats[team].goals += goals;
+        teamStats[team].completePasses += completePasses;
+        teamStats[team].incompletePasses += incompletePasses;
+        teamStats[team].totalShots += totalShots;
+        teamStats[team].shotsOnTarget += shotsOnTarget;
+        teamStats[team].tackles += tackles;
+        teamStats[team].interceptions += interceptions;
+        teamStats[team].saves += saves;
+
+        // Add passing accuracy for average calculation
+        const totalPasses = completePasses + incompletePasses;
+        if (totalPasses > 0) {
+            const passingAccuracy = (completePasses / totalPasses) * 100;
+            teamStats[team].passingAccuracySum += passingAccuracy;
+            teamStats[team].playersWithPasses += 1;
+        }
+    }
+
+    // Calculate possession and average passing accuracy
+    const totalCompletePasses = Object.values(teamStats).reduce((sum, team) => sum + team.completePasses, 0);
+    const totalIncompletePasses = Object.values(teamStats).reduce((sum, team) => sum + team.incompletePasses, 0);
+    const totalPasses = totalCompletePasses + totalIncompletePasses;
+
+    for (const team in teamStats) {
+        if (totalPasses > 0) {
+            teamStats[team].possession = (
+                ((teamStats[team].completePasses + teamStats[team].incompletePasses) / totalPasses) *
+                100
+            ).toFixed(2);
+        } else {
+            teamStats[team].possession = 'N/A';
+        }
+
+        if (teamStats[team].playersWithPasses > 0) {
+            teamStats[team].averagePassingAccuracy = (
+                teamStats[team].passingAccuracySum / teamStats[team].playersWithPasses
+            ).toFixed(2);
+        } else {
+            teamStats[team].averagePassingAccuracy = 'N/A';
+        }
+
+        // Remove temporary keys used for calculations
+        delete teamStats[team].passingAccuracySum;
+        delete teamStats[team].playersWithPasses;
+    }
+
+    return teamStats;
+}
+
+function generateMatchStatsTable(playerStats) {
+    matchStats = calculateMatchStats(playerStats)
+    console.log(matchStats)
+    const teamA = Object.keys(matchStats)[0] ? Object.keys(matchStats)[0] : "Team A"
+    const teamB = Object.keys(matchStats)[1] ? Object.keys(matchStats)[1] : "Team B"
+
+    if (!matchStats[teamA]) {
+        matchStats[teamA] = {
+            goals: 0,
+            possession: 0,
+            completePasses: 0,
+            incompletePasses: 0,
+            passingAccuracySum: 0,
+            playersWithPasses: 0, // Used for calculating average passing accuracy
+            totalShots: 0,
+            shotsOnTarget: 0,
+            tackles: 0,
+            interceptions: 0,
+            saves: 0
+        }
+    }
+
+    if (!matchStats[teamB]) {
+        matchStats[teamB] = {
+            goals: 0,
+            possession: 0,
+            completePasses: 0,
+            incompletePasses: 0,
+            passingAccuracySum: 0,
+            playersWithPasses: 0, // Used for calculating average passing accuracy
+            totalShots: 0,
+            shotsOnTarget: 0,
+            tackles: 0,
+            interceptions: 0,
+            saves: 0
+        }
+    }
+
+
+    return `
+        <table>
+            <thead>
+                <tr>
+                    <th>Match Stats</th>
+                    <th>${teamA}</th>
+                    <th>${teamB}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Goals</td>
+                    <td>${matchStats[teamA].goals}</td>
+                    <td>${matchStats[teamB].goals}</td>
+                </tr>
+                <tr>
+                    <td>Possession</td>
+                    <td>${matchStats[teamA].possession}%</td>
+                    <td>${matchStats[teamB].possession}%</td>
+                </tr>
+                <tr>
+                    <td>Cumulative Passing Accuracy</td>
+                    <td>${matchStats[teamA].averagePassingAccuracy}%</td>
+                    <td>${matchStats[teamB].averagePassingAccuracy}%</td>
+                </tr>
+                <tr>
+                    <td>Total Shots</td>
+                    <td>${matchStats[teamA].totalShots}</td>
+                    <td>${matchStats[teamB].totalShots}</td>
+                </tr>
+                <tr>
+                    <td>Total Shots on Target</td>
+                    <td>${matchStats[teamA].shotsOnTarget}</td>
+                    <td>${matchStats[teamB].shotsOnTarget}</td>
+                </tr>
+                <tr>
+                    <td>Total Tackles</td>
+                    <td>${matchStats[teamA].tackles}</td>
+                    <td>${matchStats[teamB].tackles}</td>
+                </tr>
+                <tr>
+                    <td>Total Interceptions</td>
+                    <td>${matchStats[teamA].interceptions}</td>
+                    <td>${matchStats[teamB].interceptions}</td>
+                </tr>
+                <tr>
+                    <td>Saves</td>
+                    <td>${matchStats[teamA].saves}</td>
+                    <td>${matchStats[teamB].saves}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
 }
