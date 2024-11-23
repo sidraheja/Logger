@@ -227,7 +227,7 @@ function showEditPopup(uniqueId) {
         <div class="edit-form">
             <div class="form-group">
                 <label for="playerId">Player ID:</label>
-                <input type="text" id="playerId" value="${details.playerId}">
+                <input type="text" id="playerId" value="${details.playerId}" readonly>
             </div>
             <div class="form-group">
                 <label for="manualId">Manual ID:</label>
