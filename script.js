@@ -22,6 +22,7 @@ const state = {
 // Player details storage - using unique IDs as keys
 const playerDetailsMap = new Map();
 let actionLog = [];
+let highlightsLog = [];
 let videoPlayer;
 
 // DOM Elements
@@ -148,12 +149,8 @@ function removePlayer(team) {
 
         if (team === 'teamA') {
             teamAPlayerButtonsContainer.removeChild(teamAPlayerButtonsContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
-            teamAPassContainer.removeChild(teamAPassContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
-            teamAIncompletePassContainer.removeChild(teamAIncompletePassContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
         } else {
             teamBPlayerButtonsContainer.removeChild(teamBPlayerButtonsContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
-            teamBPassContainer.removeChild(teamBPassContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
-            teamBIncompletePassContainer.removeChild(teamBIncompletePassContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
         }
 
         updateTeamPlayerCount(team);
@@ -530,6 +527,14 @@ function calculateStats() {
          actionLog = gameLogTextBox.value.split('\n').filter(line => line.trim() !== '');
     }
 
+    if (gameHighlightsTextBox.value !== '') {
+        highlightsLog = gameHighlightsTextBox.value
+                                .split('\n') // Split the input into an array of lines
+                                .filter(line => line.trim() !== '') // Remove empty or whitespace-only lines
+                                .filter(line => line.includes('Inpoint') || line.includes('Outpoint')); // Keep lines containing "Inpoint" and "Outpoint"
+
+   }
+
     // Iterate through all logged actions
     actionLog.forEach(entry => {
         console.log("HERE!!");
@@ -683,7 +688,10 @@ function calculateStats() {
 
     // Add event listener to the download button
     statsPopup.querySelector('.download-button').addEventListener('click', () => {
+        console.log("export")
         exportTablesToExcel();
+        writeToTxtFile(actionLog, 'log.txt')
+        writeToTxtFile(highlightsLog, 'highlights.txt')
     });
 
     // Close the popup when the close button is clicked
@@ -981,6 +989,43 @@ function exportTablesToExcel() {
     // Export the workbook as an .xlsx file
     XLSX.writeFile(wb, "stats_and_match_data.xlsx");
 }
+
+function writeToTxtFile(list, filename) {
+    // Check if the input list is valid
+    if (!Array.isArray(list) || list.some(item => typeof item !== 'string')) {
+        console.error("Input must be an array of strings.");
+        return;
+    }
+
+    // Convert the array of strings into a single string with each item on a new line
+    const content = list.join('\n');
+
+    // Log the content to verify it
+    console.log("File Content:", content);
+
+    // Create a Blob with the content
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+
+    // Log the Blob to ensure it's correctly created
+    console.log("Blob Size:", blob.size, "Blob Type:", blob.type);
+
+    // Create a temporary anchor element
+    const a = document.createElement('a');
+    a.href = window.URL.createObjectURL(blob); // Create an object URL for the Blob
+    a.download = filename; // Set the desired filename
+
+    // Append the anchor to the body and trigger the download
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up the anchor and revoke the object URL
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(a.href);
+
+    console.log(`File "${filename}" has been downloaded.`);
+}
+
+
 
 // Helper to parse HTML tables into arrays
 function parseHTMLTableToArray(htmlTable) {
