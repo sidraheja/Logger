@@ -23,6 +23,7 @@ const state = {
 const playerDetailsMap = new Map();
 let actionLog = [];
 let highlightsLog = [];
+let allHighlightsLog = [];
 let videoPlayer;
 
 // DOM Elements
@@ -535,6 +536,9 @@ function calculateStats() {
                                 .filter(line => line.trim() !== '') // Remove empty or whitespace-only lines
                                 .filter(line => line.includes('Inpoint') || line.includes('Outpoint')); // Keep lines containing "Inpoint" and "Outpoint"
 
+        allHighlightsLog = gameHighlightsTextBox.value
+        .split('\n') // Split the input into an array of lines
+        .filter(line => line.trim() !== '') // Remove empty or whitespace-only line
    }
 
     // Iterate through all logged actions
@@ -1024,8 +1028,9 @@ function exportTablesToZip() {
     // Generate the Excel file as a binary string
     const excelData = XLSX.write(wb, { bookType: "xlsx", type: "array" });
 
-    const actionLogString = actionLog.join("\n")
     const highlightsLogString = highlightsLog.join("\n");
+    const allHighlightsLogString = allHighlightsLog.join("\n")
+    const actionLogString = actionLog.join("\n") + " \n \n Highlights: \n" + allHighlightsLogString
 
     // Create a new ZIP file
     const zip = new JSZip();
