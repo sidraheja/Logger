@@ -581,6 +581,8 @@ function calculateStats() {
         switch (action) {
             case 'Goal':
                 stats[playerKey].goals++;
+                stats[playerKey].shotsOnTarget++;
+                stats[playerKey].totalShots++;
                 break;
             case "OwnGoal":
                 stats[playerKey].ownGoals++;
