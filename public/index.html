@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Tagging Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="football-tagging-tool">
+        <div class="football-tagging-tool">
+            <div class="main-container">
+                <div class="top-container">
+                    <section class="area video-player">
+                        <div id="matchVideoPlayer" width="100%" height="700"></div>
+                        <button class="saveToHighlightsButton" id="saveToHighlightsButton">Save to Highlights (H)</button>
+                        <!-- <iframe id="matchVideoPlayer" src="" width="100%" height="700" allow="autoplay"></iframe> -->
+                    </section>
+                    <div class="sidebar-container">
+                        <div class="layout-controls">
+                            <label>
+                                <input type="radio" name="layout" value="pid" checked> PID Layout
+                            </label>
+                            <label>
+                                <input type="radio" name="layout" value="manual"> Manual Layout
+                            </label>
+                            <label>
+                                <input type="radio" name="layout" value="jersey"> Jersey Layout
+                            </label>
+                        </div>
+                        <section class="area basic-stats">
+                            <h2>Basic Stats</h2>
+                            <button id="completePass">Complete Pass (A)</button>
+                            <button id="incompletePass">Incomplete Pass (D)</button>
+                            <button id="goalBtn">Goal (S)</button>
+                            <button id="ownGoalBtn">Own Goal (O)</button>
+                            <button id="assistBtn">Assist (Q)</button>
+                            <button id="shotOnTargetBtn">Shot On Target (W)</button>
+                            <button id="shotOffTargetBtn">Shot Off Target (E)</button>
+                            <button id="tackleBtn">Tackle (Z)</button>
+                            <button id="interceptionBtn">Interception (X)</button>
+                            <button id="saveBtn">Save (C)</button>
+                        </section>
+                    </div>
+                </div>
+                <section class="area create-players">
+                    <div class="team-section-container">
+                        <div class="team-section team-a">
+                            <div class="team-header">
+                                <h3 id="team-a-name"> Team A</h3>
+                                <div class="player-controls">
+                                    <button id="addTeamAPlayer" class="add-player">+</button>
+                                    <span id="teamAPlayerCount">0</span>
+                                    <button id="removeTeamAPlayer" class="remove-player">-</button>
+                                </div>
+                            </div>
+                            <div id="teamAPlayerButtons" class="player-buttons-container"></div>
+                        </div>
+                        <div class="team-section team-b">
+                            <div class="team-header">
+                                <h3 id="team-b-name"> Team B</h3>                                
+                                <div class="player-controls">
+                                    <button id="addTeamBPlayer" class="add-player">+</button>
+                                    <span id="teamBPlayerCount">0</span>
+                                    <button id="removeTeamBPlayer" class="remove-player">-</button>
+                                </div>
+                            </div>
+                            <div id="teamBPlayerButtons" class="player-buttons-container"></div>
+                        </div>
+                    </div>
+                </section>
+                <section class="area meta-data">
+                    <div class="input-layout-container">
+                        <div class="input-container">    
+                            <div class="video-control">
+                                <label for="matchIdDropdown">Select Match ID:</label>
+                                <select id="matchIdDropdown">
+                                    <option value="" disabled selected>Choose a Match ID</option>
+                                </select>
+                            </div>                            
+                        </div>
+                    </div>
+
+                    <div class="input-layout-container">
+                        <button id="setMatchDetails">Set Match Details</button>
+                    </div>
+                </section>
+                <div class="text-box-container">
+                    <div class="text-box">
+                        <h3>Game Log</h3>
+                        <textarea id="gameLogTextBox" readonly></textarea>
+                    </div>
+                    <div class="text-box">
+                        <h3>Game Highlights</h3>
+                        <textarea id="gameHighlightsTextBox" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+        
+    </div>
+
+    <div class="button-container">
+        <button id="undoButton">Undo</button>
+        <button id="calculateStats">Calculate Stats</button>
+    </div>
+
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span id="closePopup" class="close">&times;</span>
+            <div id="popupContent"></div>
+        </div>
+    </div>
+
+    <div id="playerEditPopup" class="popup">
+        <div class="popup-content">
+            <span class="close">&times;</span>
+            <h2>Edit Player Details</h2>
+            <div class="edit-form">
+                <div class="form-group">
+                    <label for="manualId">Manual ID:</label>
+                    <input type="text" id="manualId">
+                </div>
+                <div class="form-group">
+                    <label for="jerseyId">Jersey ID:</label>
+                    <input type="text" id="jerseyId">
+                </div>
+                <button id="savePlayerDetails">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+
+</body>
+</html>

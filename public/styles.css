@@ -1,0 +1,502 @@
+.video-player {
+    flex: 3;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    width: 100%;
+    height: 700px;
+    aspect-ratio: 16 / 9;
+}
+
+/* Updated styles for better spacing */
+.input-layout-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.input-container,
+.video-player,
+.create-players,
+.basic-stats,
+.complete-pass,
+.incomplete-pass {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+/* General styling improvements for larger video player */
+.football-tagging-tool {
+    display: flex;
+    gap: 20px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+.player-buttons-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 5px; /* Padding between player buttons */
+    padding-top: 10px;
+}
+
+.main-container {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-container {
+    flex: 3;
+    display: flex;
+    gap: 10px;
+}
+
+.sidebar-container {
+    flex: 0.25;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.area {
+    border: 1px solid #ccc;
+    padding: 2px;
+    border-radius: 5px;
+    overflow: auto;
+}
+
+.area h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.team-header {
+    display: flex;
+    align-items: center; /* Align items vertically in the center */
+    gap: 10px; /* Space between elements */
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between player control buttons and span */
+}
+
+.layout-controls {
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    align-items: flex-start; /* Align items to the start for better spacing */
+    gap: 10px; /* Increase gap for better separation between elements */
+}
+
+.create-players {
+    background-color: #ffcccb;
+    display: flex;
+    flex-direction: row; /* Changed to row to align teams horizontally */
+    gap: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.create-players .team-section-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.create-players .team-section {
+    flex-basis: 48%;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+
+.basic-stats {
+    grid-column: 1 / span 2;
+    background-color: #ffffcc;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 5px;
+    flex-direction: column;
+}
+
+.button-container {
+    grid-column: 1 / span 2;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.text-box-container {
+    grid-column: 1 / span 2;
+    display: flex;
+    gap: 20px;
+    padding-top: 20px;
+}
+
+.text-box {
+    flex: 1;
+}
+
+.text-box h3 {
+    margin-top: 0;
+}
+
+textarea {
+    width: 100%;
+    height: 150px;
+    resize: vertical;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    position: relative;
+    width: 80%;
+    max-width: 500px;
+}
+
+.close {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: bold;
+}
+
+.form-group input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 14px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.player-button.selected {
+    background-color: #007bff;
+    color: white;
+    outline: 3px solid #004a99;
+}
+
+.green-tick {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 100px;
+    color: rgb(255, 255, 255);
+    animation: fadeInOut 1s ease-in-out;
+    background-color: rgba(0, 128, 0, 0.8); /* Green background with slight transparency */
+    padding: 20px;
+    border-radius: 10px; /* Rounded corners */
+}
+
+.stats-popup {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.stats-popup.full-screen {
+    background-color: white;
+}
+
+.stats-popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    position: relative;
+    width: 80%;
+    max-width: 900px;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.stats-popup.full-screen .stats-popup-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    padding: 0;
+}
+
+.stats-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.stats-popup-header h2 {
+    margin: 0;
+}
+
+.close-button {
+    font-size: 32px;
+    cursor: pointer;
+    color: #666;
+}
+
+.stats-container {
+    flex-grow: 1;
+    overflow-x: auto;
+    padding-top: 20px;
+}
+
+.stats-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.stats-container th, .stats-container td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.stats-container th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.stats-container td {
+    vertical-align: middle;
+}
+
+.stats-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.download-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.download-button:hover {
+    background-color: #45a049;
+}
+
+.input-layout-container {
+    display: flex;
+    gap: 20px; /* Adjust as needed for spacing */
+    align-items: center;
+}
+
+
+.input-container,
+.video-player,
+.create-players,
+.basic-stats,
+.complete-pass,
+.incomplete-pass {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+/* Update for areas inside sidebar */
+.area {
+    margin-bottom: 0;
+}
+
+/* Highlights popup specific styles */
+.highlights-popup-content {
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.highlights-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.highlights-form input,
+.highlights-form textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.highlights-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.player-checkbox {
+    display: none;
+}
+
+.player-checkbox + label {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.player-checkbox:checked + label {
+    background-color: #007bff;
+    color: white;
+}
+
+#logTimestampButton {
+    font-size: 0.75rem; /* Smaller font */
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    color: #555;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.form-group p {
+    font-style: italic;
+    font-size: 0.85rem; /* Smaller text */
+    color: grey;
+    margin-bottom: 8px; /* Optional spacing */
+}
+
+.saveToHighlightsButton {
+    position: absolute;
+    top: 30px;
+    right: 170px;
+    z-index: 10;
+    padding: 10px 20px;
+    background-color: #4CAF50; /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Shadow for visibility */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.saveToHighlightsButton:hover {
+    background-color: #0056b3; /* Slightly darker blue on hover */
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on hover */
+}
+
+.teamNameInput {
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Shadow for visibility */
+    outline: none; /* Remove default outline */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.teamNameInput:focus {
+    border-color: #007BFF; /* Blue border on focus */
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on focus */
+}
+
+.area.meta-data {
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping if needed for smaller screens */
+    gap: 20px; /* Optional: Adds spacing between the containers */
+    align-items: flex-start; /* Align containers at the top */
+}
+
+.input-layout-container {
+    flex: 1; /* Distribute available space equally */
+    min-width: 300px; /* Optional: Set a minimum width for smaller screens */
+    padding: 10px; /* Add some padding for better spacing */
+    background-color: #f9f9f9; /* Optional: Light background for distinction */
+    border: 1px solid #ddd; /* Optional: Border for better visibility */
+    border-radius: 5px; /* Optional: Rounded corners */
+}
