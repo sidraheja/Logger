@@ -500,3 +500,21 @@ button:hover {
     border: 1px solid #ddd; /* Optional: Border for better visibility */
     border-radius: 5px; /* Optional: Rounded corners */
 }
+
+.suggestions {
+    margin-top: 10px;
+}
+
+.suggestion-item {
+    padding: 5px 10px;
+    display: inline-block;
+    margin: 5px;
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+    font-family: Arial, sans-serif;
+}
+
+.suggestion-item:hover {
+    background-color: #ddd;
+}

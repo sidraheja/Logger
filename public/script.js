@@ -264,11 +264,9 @@ function showEditPopup(uniqueId) {
                 <input type="text" id="jerseyId" value="${details.jerseyId}">
             </div>
             <div class="form-group">
-                <label for="playerDropdown">Player Name:</label>
-                <select id="playerDropdown" class="form-control">
-                    <!-- Options will be populated here dynamically -->
-                    ${playerOptions}
-                </select>
+                <label for="playerName">Player Name:</label>
+                <input type="text" id="playerName" value="${details.playerName}">
+                <div id="playerSuggestions" class="suggestions"></div>
             </div>
             <button id="savePlayerDetails">Save</button>
         </div>
@@ -277,11 +275,36 @@ function showEditPopup(uniqueId) {
     playerEditPopup.querySelector('.popup-content').innerHTML = content;
     playerEditPopup.dataset.uniqueId = uniqueId;
     playerEditPopup.style.display = 'flex';
-
-    document.getElementById('playerDropdown').addEventListener('change', (event) => {
-        document.getElementById('playerId').value = players[event.target.value]
-    });
     
+    const inputField = document.getElementById("playerName");
+    const suggestionsDiv = document.getElementById("playerSuggestions");
+
+    inputField.addEventListener("input", function () {
+        const searchTerm = inputField.value.toLowerCase();
+        suggestionsDiv.innerHTML = ""; // Clear previous suggestions
+
+        if (searchTerm) {
+            const matchingPlayers = Object.keys(players).filter(player =>
+                player.toLowerCase().includes(searchTerm)
+            );
+
+            // Display matching players
+            matchingPlayers.forEach(player => {
+                const suggestion = document.createElement("div");
+                suggestion.textContent = player;
+                suggestion.className = "suggestion-item";
+                suggestion.style.display = "inline-block";
+                suggestion.style.margin = "5px";
+                suggestion.style.cursor = "pointer";
+                suggestion.addEventListener("click", () => {
+                    inputField.value = player; // Set input value
+                    suggestionsDiv.innerHTML = ""; // Clear suggestions
+                });
+                suggestionsDiv.appendChild(suggestion);
+            });
+        }
+    });
+
     document.getElementById('savePlayerDetails').addEventListener('click', () => {
         savePlayerDetails();
     });
@@ -346,7 +369,7 @@ function savePlayerDetails() {
     const playerId = document.getElementById('playerId').value;
     const manualId = document.getElementById('manualId').value || 'N/A';
     const jerseyId = document.getElementById('jerseyId').value || 'N/A';
-    const playerName = document.getElementById("playerDropdown").value || 'N/A';
+    const playerName = document.getElementById("playerName").value || 'N/A';
     playerDetails = playerDetailsMap.get(uniqueId)
     team = playerDetails.team
     
@@ -999,8 +1022,8 @@ function generateMatchStatsTable(playerStats) {
                 </tr>
                 <tr>
                     <td>Possession</td>
-                    <td>${matchStats[teamA].possession}%</td>
-                    <td>${matchStats[teamB].possession}%</td>
+                    <td>${matchStats[teamA].possession}</td>
+                    <td>${matchStats[teamB].possession}</td>
                 </tr>
                 <tr>
                     <td>Cumulative Passing Accuracy</td>
@@ -1031,6 +1054,16 @@ function generateMatchStatsTable(playerStats) {
                     <td>Saves</td>
                     <td>${matchStats[teamA].saves}</td>
                     <td>${matchStats[teamB].saves}</td>
+                </tr>
+                <tr>
+                    <td>Highlights Link</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Match Number</td>
+                    <td>${state.match.id}</td>
+                    <td>${state.match.id}</td>
                 </tr>
             </tbody>
         </table>
