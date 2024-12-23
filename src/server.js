@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = 3000; // Port for local testing
 
+app.use(express.json());
+
 // Middleware to serve static files
 app.use(express.static('public'));
 
@@ -110,7 +112,88 @@ app.get('/api/games/:matchId', async (req, res) => {
   }
 });
 
+const statSchema = new mongoose.Schema({
+  title: { type: String, required: false },
+  stat: { type: String, required: false }
+});
 
+const teamStatsSchema = new mongoose.Schema({
+  goals: { type: String, required: false },
+  stats: { type: [statSchema], required: false },
+  teamId: { type: mongoose.Schema.Types.ObjectId, required: false }
+});
+
+const gameStatsSchema = new mongoose.Schema({
+  home: { type: teamStatsSchema, required: false },
+  away: { type: teamStatsSchema, required: false },
+  highlightLink: { type: String, required: false },
+  gameLog: { type: [String], required: false },
+  videoLog: { type: [String], required: false },
+  gameId: { type: mongoose.Schema.Types.ObjectId, required: false }
+});
+
+const GameStats = mongoose.model('game-stats', gameStatsSchema);
+
+app.post('/api/games-stats/:matchId', async (req, res) => {
+
+  const { matchId } = req.params;
+  const { gameStats, gameLog, videoLog, playerStats } = req.body;
+
+  const game = await Game.findOne({ matchId });
+  if (!game) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+
+  const matchObjectId = game._id;
+  const homeTeamId = game.home.teamId;
+  const awayTeamId = game.away.teamId;
+
+  let gameStatsModel = await GameStats.findOne({ gameId: game._id });
+
+  if (!gameStatsModel) {
+    gameStatsModel = new GameStats()
+  }
+
+  gameStatsModel.gameId = matchObjectId;
+  gameStatsModel.gameLog = gameLog;
+  gameStatsModel.videoLog = videoLog;
+  gameStatsModel.highlightLink = "";
+  gameStatsModel.home = {
+    "teamId": homeTeamId,
+    "goals": 0,
+    "stats": []
+  }
+
+  gameStatsModel.away = {
+    "teamId": awayTeamId,
+    "goals": 0,
+    "stats": []
+  }
+
+  gameStats.forEach(stat => {
+    if (stat[0] === "Goals") {
+      gameStatsModel.home.goals = stat[1];
+      gameStatsModel.away.goals = stat[2];
+    } else {
+      gameStatsModel.home.stats.push({
+        "title": stat[0],
+        "stat": stat[1]
+      });
+      gameStatsModel.away.stats.push({
+        "title": stat[0],
+        "stat": stat[2]
+      });
+    }
+  });
+
+  gameStatsModel.save();
+
+  
+});
+
+app.post('/api/user-stats/:matchId', async (req, res) => {
+
+});
 
 // Start the server
 app.listen(PORT, () => {

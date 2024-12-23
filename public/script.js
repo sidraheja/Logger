@@ -1079,6 +1079,9 @@ function exportTablesToZip() {
     const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
     const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
 
+    console.log(matchStatsArray)
+
+    updateMatchDatabase(state.match.id, matchStatsArray, actionLog, highlightsLog, playerStatsArray)
     // Create a new workbook for Excel
     const wb = XLSX.utils.book_new();
 
@@ -1151,4 +1154,30 @@ function fetchActiveMatchIds() {
     .catch(err => console.error('Error fetching matchIds:', err));
 }
   
+function updateMatchDatabase(matchId, gameStats, gameLog, videoLog, playerStats) {
+
+    try {
+      const response = fetch(`/api/games-stats/${matchId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameStats,
+          gameLog,
+          videoLog,
+          playerStats,
+        }),
+      });
+  
+      if (response.ok) {
+        const data = response.json();
+        alert('Game stats updated successfully!');
+      } else {
+        alert(`Failed to update game stats: ${response.statusText}`);
+      }
+    } catch (error) {
+      alert(`Error while calling API: ${error.message}`);
+    }
+  };
   
