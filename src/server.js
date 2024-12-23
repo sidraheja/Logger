@@ -132,7 +132,16 @@ const gameStatsSchema = new mongoose.Schema({
   gameId: { type: mongoose.Schema.Types.ObjectId, required: false }
 });
 
+const userStatsSchema = new mongoose.Schema({
+  gameId: { type: mongoose.Schema.Types.ObjectId, required: false },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: false },
+  teamId: { type: mongoose.Schema.Types.ObjectId, required: false },
+  stats: { type: [statSchema], required: false },
+  team: { type: String, required: false }
+});
+
 const GameStats = mongoose.model('game-stats', gameStatsSchema);
+const UserStats = mongoose.model('user-stats', userStatsSchema);
 
 app.post('/api/games-stats/:matchId', async (req, res) => {
 
@@ -188,7 +197,7 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
 
   gameStatsModel.save();
 
-  
+
 });
 
 app.post('/api/user-stats/:matchId', async (req, res) => {

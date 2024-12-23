@@ -34,7 +34,9 @@ const teamBPlayerButtonsContainer = document.getElementById('teamBPlayerButtons'
 const teamAPlayerCount = document.getElementById('teamAPlayerCount');
 const teamBPlayerCount = document.getElementById('teamBPlayerCount');
 const addTeamAPlayerButton = document.getElementById('addTeamAPlayer');
+addTeamAPlayerButton.disabled = state.match.id == ""
 const addTeamBPlayerButton = document.getElementById('addTeamBPlayer');
+addTeamBPlayerButton.disabled = state.match.id == ""
 const removeTeamAPlayerButton = document.getElementById('removeTeamAPlayer');
 const removeTeamBPlayerButton = document.getElementById('removeTeamBPlayer');
 const teamAPassContainer = document.querySelector('.complete-pass .team-a-pass');
@@ -68,6 +70,8 @@ document.getElementById('setMatchDetails').addEventListener('click', showEditMat
 document.getElementById('matchIdDropdown').addEventListener('change', (event) => {
     const selectedMatchId = event.target.value;
     if (selectedMatchId) {
+        addTeamAPlayerButton.disabled = false
+        addTeamBPlayerButton.disabled = false
       state.match.id = selectedMatchId
       fetch(`/api/games/${selectedMatchId}`)
         .then(response => response.json())
@@ -276,6 +280,7 @@ function showEditPopup(uniqueId) {
     playerEditPopup.dataset.uniqueId = uniqueId;
     playerEditPopup.style.display = 'flex';
     
+    const playerId = document.getElementById("playerId");
     const inputField = document.getElementById("playerName");
     const suggestionsDiv = document.getElementById("playerSuggestions");
 
@@ -297,6 +302,7 @@ function showEditPopup(uniqueId) {
                 suggestion.style.margin = "5px";
                 suggestion.style.cursor = "pointer";
                 suggestion.addEventListener("click", () => {
+                    playerId.value = players[player];
                     inputField.value = player; // Set input value
                     suggestionsDiv.innerHTML = ""; // Clear suggestions
                 });
