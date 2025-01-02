@@ -1,5 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { GameStats, UserStats } = require('./schemas/stats');
+const { Game } = require('./schemas/game');
+const { Team } = require('./schemas/team');
+const { User } = require('./schemas/user');
 const app = express();
 const PORT = 3000; // Port for local testing
 
@@ -14,23 +18,7 @@ mongoose.connect('mongodb+srv://gauravyas:r5uIjbtIT0F4rIgB@closecontrolcluster.w
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Define schema and model
-const gameSchema = new mongoose.Schema({
-  matchId: { type: String, required: true },
-  ageCategory: { type: String, required: true },
-  away: {
-    colour: { type: String, required: true },
-    teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
-  },
-  gameweek: { type: String, required: true },
-  home: {
-    colour: { type: String, required: true },
-    teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
-  },
-  videoLink: { type: String, required: true },
-  isActive: { type: Boolean, default: true },
-});
 
-const Game = mongoose.model('games', gameSchema);
 
 // API endpoint to fetch active games
 app.get('/api/active-games', async (req, res) => {
@@ -43,22 +31,6 @@ app.get('/api/active-games', async (req, res) => {
     res.status(500).json({ error: 'Error fetching active games' });
   }
 });
-
-const teamSchema = new mongoose.Schema({
-  name: String,
-  ageCategory: String
-});
-
-const Team = mongoose.model('teams', teamSchema);
-
-
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // Adding validation
-  playerId: { type: String, required: true }, // Ensure playerId is a string if that's intentional
-  teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true } // Use correct ObjectId reference
-});
-
-const User = mongoose.model('users', userSchema);
 
 app.get('/api/games/:matchId', async (req, res) => {
   const { matchId } = req.params;
@@ -111,37 +83,6 @@ app.get('/api/games/:matchId', async (req, res) => {
     res.status(500).json({ error: 'Error fetching game details' });
   }
 });
-
-const statSchema = new mongoose.Schema({
-  title: { type: String, required: false },
-  stat: { type: String, required: false }
-});
-
-const teamStatsSchema = new mongoose.Schema({
-  goals: { type: String, required: false },
-  stats: { type: [statSchema], required: false },
-  teamId: { type: mongoose.Schema.Types.ObjectId, required: false }
-});
-
-const gameStatsSchema = new mongoose.Schema({
-  home: { type: teamStatsSchema, required: false },
-  away: { type: teamStatsSchema, required: false },
-  highlightLink: { type: String, required: false },
-  gameLog: { type: [String], required: false },
-  videoLog: { type: [String], required: false },
-  gameId: { type: mongoose.Schema.Types.ObjectId, required: false }
-});
-
-const userStatsSchema = new mongoose.Schema({
-  gameId: { type: mongoose.Schema.Types.ObjectId, required: false },
-  userId: { type: mongoose.Schema.Types.ObjectId, required: false },
-  teamId: { type: mongoose.Schema.Types.ObjectId, required: false },
-  stats: { type: [statSchema], required: false },
-  team: { type: String, required: false }
-});
-
-const GameStats = mongoose.model('game-stats', gameStatsSchema);
-const UserStats = mongoose.model('user-stats', userStatsSchema);
 
 app.post('/api/games-stats/:matchId', async (req, res) => {
 
@@ -196,13 +137,73 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
   });
 
   gameStatsModel.save();
+  saveUserGameStats(homeTeamId, awayTeamId, matchObjectId, playerStats);
 
-
+  return res.status(200).json({
+    statusText: "Game stats updated successfully"
+  })
 });
 
-app.post('/api/user-stats/:matchId', async (req, res) => {
+async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
 
-});
+  const keySetToAvoid = new Set(["Player", "Player Name", "Manual ID", "Jersey ID", "Team", "Age Category"]);
+
+
+  let index = 0
+  let titleArray = []
+  const homeTeam = await Team.findOne({ _id: homeTeamId });
+
+  await UserStats.deleteMany({gameId: gameId})
+
+  playerStats.forEach(stats => {
+    if(index == 0) {
+      titleArray = stats
+      index = index + 1
+    } else {
+      const playerStats = titleArray.reduce((acc, title, index) => {
+        acc[title] = stats[index];
+        return acc;
+      }, {});
+
+      let teamId = playerStats["Team"] == homeTeam["name"] ? homeTeamId : awayTeamId
+
+      let player = User.findOne({
+        name: playerStats["Player Name"], // Replace with the variable holding the player's name
+        playerId: playerStats["Player"], // Replace with the variable holding the player ID
+        teamId: teamId // Replace with the variables holding home and away team IDs
+      });
+
+      if(!player) {
+        player = User.create({
+          name: playerStats["Player Name"],
+          playerId: playerStats["Player"],
+          teamId: teamId
+        })
+      }
+
+      const playerDBStats = []
+
+      Object.keys(playerStats).forEach(key => {
+        if (!keySetToAvoid.has(key)) {
+            playerDBStats.push({
+              "title": key,
+              "stat": playerStats[key]
+            })
+        }
+      });
+
+    
+      UserStats.create({
+        gameId: gameId, 
+        userId: player["_id"],
+        teamId: teamId,
+        stats: playerDBStats,
+        team: teamId == homeTeamId ? "home" : "away"
+      })
+
+    }
+  })
+}
 
 // Start the server
 app.listen(PORT, () => {

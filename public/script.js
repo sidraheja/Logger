@@ -709,7 +709,7 @@ function calculateStats() {
     // Populate the stats table
     Object.values(stats).forEach(player => {
         const passingAccuracy = player.completePasses + player.incompletePasses > 0
-            ? `${((player.completePasses / (player.completePasses + player.incompletePasses)) * 100).toFixed(2)}%`
+            ? `${((player.completePasses / (player.completePasses + player.incompletePasses)) * 100).toFixed(2)}`
             : 'N/A';
 
         statsTable += `
@@ -957,7 +957,7 @@ function calculateMatchStats(stats) {
         if (teamStats[team].playersWithPasses > 0) {
             teamStats[team].averagePassingAccuracy = `${(
                 teamStats[team].passingAccuracySum / teamStats[team].playersWithPasses
-            ).toFixed(2)}%`;
+            ).toFixed(2)}`;
         } else {
             teamStats[team].averagePassingAccuracy = 'N/A';
         }
@@ -1076,7 +1076,7 @@ function generateMatchStatsTable(playerStats) {
     `;
 }
 
-function exportTablesToZip() {
+async function exportTablesToZip() {
     // Parse the player stats table
     const playerStatsTable = document.querySelector('.stats-container table');
     const playerStatsArray = parseHTMLTableToArray(playerStatsTable.outerHTML);
@@ -1085,9 +1085,7 @@ function exportTablesToZip() {
     const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
     const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
 
-    console.log(matchStatsArray)
-
-    updateMatchDatabase(state.match.id, matchStatsArray, actionLog, highlightsLog, playerStatsArray)
+    await updateMatchDatabase(state.match.id, matchStatsArray, actionLog, highlightsLog, playerStatsArray)
     // Create a new workbook for Excel
     const wb = XLSX.utils.book_new();
 
@@ -1160,10 +1158,10 @@ function fetchActiveMatchIds() {
     .catch(err => console.error('Error fetching matchIds:', err));
 }
   
-function updateMatchDatabase(matchId, gameStats, gameLog, videoLog, playerStats) {
+async function updateMatchDatabase(matchId, gameStats, gameLog, videoLog, playerStats) {
 
     try {
-      const response = fetch(`/api/games-stats/${matchId}`, {
+      const response = await fetch(`/api/games-stats/${matchId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1176,10 +1174,9 @@ function updateMatchDatabase(matchId, gameStats, gameLog, videoLog, playerStats)
         }),
       });
   
-      if (response.ok) {
-        const data = response.json();
-        alert('Game stats updated successfully!');
-      } else {
+      console.log(response)
+
+      if (!response.ok) {
         alert(`Failed to update game stats: ${response.statusText}`);
       }
     } catch (error) {
