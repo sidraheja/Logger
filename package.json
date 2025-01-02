@@ -1,9 +1,9 @@
 {
   "name": "logger",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node api/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
