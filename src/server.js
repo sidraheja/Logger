@@ -59,6 +59,25 @@ app.get('/api/games/:matchId', async (req, res) => {
       awayTeamDict[player.name] = player.playerId
     })
 
+    const matchStats = await GameStats.findOne({gameId: game["_id"]})
+    const userStats = await UserStats.find({gameId: game["_id"]})
+
+    let gameLog = []
+    let videoLog = []
+    let players = []
+
+    if(matchStats) {
+      gameLog = matchStats.gameLog
+      videoLog =  matchStats.videoLog
+    }
+
+    if(userStats) {
+      userStats.forEach(userStat => {
+        userStat["identifiers"]["teamType"] =  userStat["team"] == "home" ? "teamA" : "teamB"
+        players.push(userStat["identifiers"])
+      })
+    }
+
     // Construct the response
     const response = {
       matchId: game.matchId,
@@ -75,6 +94,9 @@ app.get('/api/games/:matchId', async (req, res) => {
         teamDetails: awayTeam || null, // Include team details or null if not found
         players: awayTeamDict
       },
+      gameLog: gameLog,
+      videoLog: videoLog,
+      players: players
     };
 
     res.json(response);
@@ -183,12 +205,17 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
 
       const playerDBStats = []
 
+      const playerDBIdentifiers = {}
+
+
       Object.keys(playerStats).forEach(key => {
         if (!keySetToAvoid.has(key)) {
             playerDBStats.push({
               "title": key,
               "stat": playerStats[key]
             })
+        } else {
+          playerDBIdentifiers[key] = playerStats[key]
         }
       });
 
@@ -198,6 +225,7 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
         userId: player["_id"],
         teamId: teamId,
         stats: playerDBStats,
+        identifiers: playerDBIdentifiers,
         team: teamId == homeTeamId ? "home" : "away"
       })
 

@@ -29,7 +29,8 @@ const userStatsSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, required: false },
   teamId: { type: mongoose.Schema.Types.ObjectId, required: false },
   stats: { type: [statSchema], required: false },
-  team: { type: String, required: false }
+  team: { type: String, required: false },
+  identifiers: {type: Object}
 });
 
 const GameStats = mongoose.model('game-stats', gameStatsSchema);

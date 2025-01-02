@@ -12,7 +12,6 @@ const state = {
     },
     selectedPlayerId: null,
     currentLayout: 'pid',
-    gameLog: [],
     nextUniqueId: 1, // Counter for generating unique IDs
     highlights: {
         start: "",
@@ -81,6 +80,15 @@ document.getElementById('matchIdDropdown').addEventListener('change', (event) =>
           state.match.teamAPlayers = game.home.players
           state.match.teamB = game.away.teamDetails.name
           state.match.teamBPlayers = game.away.players
+          console.log(game)
+          actionLog = game.gameLog
+          gameLogTextBox.value = actionLog.join('\n') + '\n';
+          videoLog = game.videoLog
+          gameHighlightsTextBox.value = videoLog.join('\n') + '\n';
+        
+          game.players.forEach(player => {
+            addPlayerWithPresets(player["teamType"], player["Player"], player["Manual ID"], player["Jersey ID"], player["Player Name"])
+          })
           updateYoutubeVideo(game.videoLink)
         })
         .catch(err => console.error('Error fetching game:', err));
@@ -143,13 +151,17 @@ function createPlayerButton(uniqueId, isOpposition = false) {
 }
 
 function addPlayer(team) {
+    addPlayerWithPresets(team, `${team[team.length - 1].toUpperCase()}${state[team].length}`, 'N/A', 'N/A', 'N/A')
+}
+
+function addPlayerWithPresets(team, playerId, manualId, jerseyId, playerName) {
     const uniqueId = generateUniqueId();
     state[team].push(uniqueId);
     playerDetailsMap.set(uniqueId, {
-        playerId: `${team[team.length - 1].toUpperCase()}${state[team].length}`,
-        manualId: 'N/A',
-        jerseyId: 'N/A',
-        playerName: "N/A",
+        playerId: playerId,
+        manualId: manualId,
+        jerseyId: jerseyId,
+        playerName: playerName,
         team: team
     });
 
@@ -395,6 +407,8 @@ function savePlayerDetails() {
     
     // Close the popup
     playerEditPopup.style.display = 'none';
+
+    logAction("Player Added" , uniqueId)
 }
 
 // Update all player buttons text based on current layout
@@ -1085,7 +1099,7 @@ async function exportTablesToZip() {
     const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
     const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
 
-    await updateMatchDatabase(state.match.id, matchStatsArray, actionLog, highlightsLog, playerStatsArray)
+    await updateMatchDatabase(state.match.id, matchStatsArray, actionLog, allHighlightsLog, playerStatsArray)
     // Create a new workbook for Excel
     const wb = XLSX.utils.book_new();
 
