@@ -8,8 +8,6 @@ const app = express();
 const PORT = 3000; // Port for local testing
 
 app.use(express.json());
-app.use(express.static('public'));
-
 
 // Middleware to serve static files
 app.use(express.static('public'));
@@ -234,11 +232,6 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
     }
   })
 }
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
-
 
 // Uncomment to Run Locally Start the server
 // app.listen(PORT, () => {
