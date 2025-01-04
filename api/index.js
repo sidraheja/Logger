@@ -23,17 +23,23 @@ mongoose.connect('mongodb+srv://gauravyas:r5uIjbtIT0F4rIgB@closecontrolcluster.w
 // API endpoint to fetch active games
 app.get('/api/active-games', async (req, res) => {
   try {
-    const activeGames = await Game.find({ isActive: true }, { matchId: 1, _id: 0 }).lean();
-    const matchIds = activeGames.map(game => game.matchId);
-
-    res.json(matchIds);
+    const activeGames = await Game.find({ isActive: true }, { ageCategory: 1, matchId: 1, _id: 0 }).lean();
+    const matchDetails = activeGames.map(game => ({
+      matchId: game.matchId,
+      ageCategory: game.ageCategory
+    }));
+    
+    res.json(matchDetails);
   } catch (err) {
     res.status(500).json({ error: 'Error fetching active games' });
   }
 });
 
 app.get('/api/games/:matchId', async (req, res) => {
-  const { matchId } = req.params;
+  const  matchIdAndAgeCategory  = req.params.matchId;
+  const [matchId, ageCategory] = matchIdAndAgeCategory.split(' ');
+
+  console.log({ matchId, ageCategory });
 
   try {
     // Find the game by matchId

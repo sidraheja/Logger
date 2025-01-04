@@ -1165,20 +1165,21 @@ function parseHTMLTableToArray(htmlTable) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchActiveMatchIds()
+    fetchActiveMatchIdsAndAgeCategories()
 });
 
-function fetchActiveMatchIds() {
+function fetchActiveMatchIdsAndAgeCategories() {
     fetch('/api/active-games')
     .then(response => response.json())
     .then(matchIds => {
       const matchIdDropdown = document.getElementById('matchIdDropdown');
 
       // Add matchId options to the dropdown
-      matchIds.forEach(matchId => {
+      matchIds.forEach(match => {
+          const {matchId, ageCategory} = match
           const option = document.createElement('option');
-          option.value = matchId;
-          option.textContent = matchId;
+          option.value = matchId + " " + ageCategory;
+          option.textContent = matchId + " " + ageCategory;
           matchIdDropdown.appendChild(option);
       });
     })
