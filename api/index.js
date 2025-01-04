@@ -78,6 +78,16 @@ app.get('/api/games/:matchId', async (req, res) => {
       })
     }
 
+    players.sort((a, b) => {
+      if (a.Player < b.Player) {
+        return -1; // a comes before b
+      }
+      if (a.Player > b.Player) {
+        return 1; // a comes after b
+      }
+      return 0; // a and b are equal
+    });
+
     // Construct the response
     const response = {
       matchId: game.matchId,
@@ -168,7 +178,7 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
 
 async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
 
-  const keySetToAvoid = new Set(["Player", "Player Name", "Manual ID", "Jersey ID", "Team", "Age Category"]);
+  const keySetToAvoid = new Set(["Player", "Player Name", "Player ID", "Manual ID", "Jersey ID", "Team", "Age Category"]);
 
 
   let index = 0
@@ -191,14 +201,14 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
 
       let player = User.findOne({
         name: playerStats["Player Name"], // Replace with the variable holding the player's name
-        playerId: playerStats["Player"], // Replace with the variable holding the player ID
+        playerId: playerStats["Player ID"], // Replace with the variable holding the player ID
         teamId: teamId // Replace with the variables holding home and away team IDs
       });
 
       if(!player) {
         player = User.create({
           name: playerStats["Player Name"],
-          playerId: playerStats["Player"],
+          playerId: playerStats["Player ID"],
           teamId: teamId
         })
       }

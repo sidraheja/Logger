@@ -80,14 +80,13 @@ document.getElementById('matchIdDropdown').addEventListener('change', (event) =>
           state.match.teamAPlayers = game.home.players
           state.match.teamB = game.away.teamDetails.name
           state.match.teamBPlayers = game.away.players
-          console.log(game)
           actionLog = game.gameLog
           gameLogTextBox.value = actionLog.join('\n') + '\n';
           videoLog = game.videoLog
           gameHighlightsTextBox.value = videoLog.join('\n') + '\n';
         
           game.players.forEach(player => {
-            addPlayerWithPresets(player["teamType"], player["Player"], player["Manual ID"], player["Jersey ID"], player["Player Name"])
+            addPlayerWithPresets(player["teamType"], player["Player"], player["Player ID"], player["Manual ID"], player["Jersey ID"], player["Player Name"])
           })
           updateYoutubeVideo(game.videoLink)
         })
@@ -151,13 +150,15 @@ function createPlayerButton(uniqueId, isOpposition = false) {
 }
 
 function addPlayer(team) {
-    addPlayerWithPresets(team, `${team[team.length - 1].toUpperCase()}${state[team].length}`, 'N/A', 'N/A', 'N/A')
+    const playedLoggerId = `${team[team.length - 1].toUpperCase()}${state[team].length}`
+    addPlayerWithPresets(team, playedLoggerId, playedLoggerId, 'N/A', 'N/A', 'N/A')
 }
 
-function addPlayerWithPresets(team, playerId, manualId, jerseyId, playerName) {
+function addPlayerWithPresets(team, playerLoggerId, playerId, manualId, jerseyId, playerName) {
     const uniqueId = generateUniqueId();
     state[team].push(uniqueId);
     playerDetailsMap.set(uniqueId, {
+        playerLoggerId: playerLoggerId,
         playerId: playerId,
         manualId: manualId,
         jerseyId: jerseyId,
@@ -174,6 +175,7 @@ function addPlayerWithPresets(team, playerId, manualId, jerseyId, playerName) {
         teamBPlayerButtonsContainer.appendChild(button);
     }
 
+    logAction("Player Added" , uniqueId)
     updateTeamPlayerCount(team);
 }
 
@@ -215,7 +217,7 @@ function updatePlayerButtonText(button) {
             textSpan.textContent = details.jerseyId;
             break;
         default: // pid layout
-            textSpan.textContent = details.playerId;
+            textSpan.textContent = details.playerLoggerId;
         }
     }
 }
@@ -264,12 +266,17 @@ function showEditPopup(uniqueId) {
                         .map(player => `<option value="${player}">${player}</option>`)
                         .join("");
 
+
     const content = `
         <h2>Edit Player Details</h2>
         <div class="edit-form">
             <div class="form-group">
+                <label for="playerLoggerId">Player Logger ID:</label>
+                <input type="text" id="playerLoggerId" value="${details.playerLoggerId}" readonly>
+            </div>
+            <div class="form-group">
                 <label for="playerId">Player ID:</label>
-                <input type="text" id="playerId" value="${details.playerId}" readonly>
+                <input type="text" id="playerId" value="${details.playerId}">
             </div>
             <div class="form-group">
                 <label for="manualId">Manual ID:</label>
@@ -384,6 +391,7 @@ function showEditMatchPopup(uniqueId) {
 // Save player details from popup
 function savePlayerDetails() {
     const uniqueId = playerEditPopup.dataset.uniqueId;
+    const playerLoggerId = document.getElementById('playerLoggerId').value;
     const playerId = document.getElementById('playerId').value;
     const manualId = document.getElementById('manualId').value || 'N/A';
     const jerseyId = document.getElementById('jerseyId').value || 'N/A';
@@ -393,6 +401,7 @@ function savePlayerDetails() {
     
     // Update the details in the map
     playerDetailsMap.set(uniqueId, {
+        playerLoggerId,
         playerId,
         manualId,
         jerseyId,
@@ -407,8 +416,6 @@ function savePlayerDetails() {
     
     // Close the popup
     playerEditPopup.style.display = 'none';
-
-    logAction("Player Added" , uniqueId)
 }
 
 // Update all player buttons text based on current layout
@@ -623,70 +630,75 @@ function calculateStats() {
         let [playerId, manualId, jerseyId, playerName, uniqueId] = playerInfo.split(' : ');
         const playerKey = `${uniqueId}`;
         player = playerDetailsMap.get(uniqueId)
-        const team = state.match[player.team] ? state.match[player.team] : player.team
-        const ageCategory = state.match.category
-        playerId = player.playerId
-        manualId = player.manualId
-        jerseyId = player.jerseyId
-        playerName = player.playerName
 
-        // Initialize player stats if not already present
-        if (!stats[playerKey]) {
-            stats[playerKey] = {
-                playerName,
-                playerId,
-                manualId,
-                jerseyId,
-                team,
-                ageCategory,
-                goals: 0,
-                assists: 0,
-                completePasses: 0,
-                incompletePasses: 0,
-                totalShots: 0,
-                shotsOnTarget: 0,
-                tackles: 0,
-                interceptions: 0,
-                saves: 0,
-                ownGoals: 0
-            };
-        }
+        if(player) {
+            const team = state.match[player.team] ? state.match[player.team] : player.team
+            const ageCategory = state.match.category
+            playerId = player.playerId
+            manualId = player.manualId
+            jerseyId = player.jerseyId
+            playerName = player.playerName
+            playerLoggerId = player.playerLoggerId
 
-        // Update player stats based on the action
-        switch (action) {
-            case 'Goal':
-                stats[playerKey].goals++;
-                stats[playerKey].shotsOnTarget++;
-                stats[playerKey].totalShots++;
-                break;
-            case "OwnGoal":
-                stats[playerKey].ownGoals++;
-                break;
-            case 'Assist':
-                stats[playerKey].assists++;
-                break;
-            case 'CompletePass':
-                stats[playerKey].completePasses++;
-                break;
-            case 'IncompletePass':
-                stats[playerKey].incompletePasses++;
-                break;
-            case 'ShotOnTarget':
-                stats[playerKey].shotsOnTarget++;
-                stats[playerKey].totalShots++;
-                break;
-            case 'ShotOffTarget':
-                stats[playerKey].totalShots++;
-                break;
-            case 'Tackle':
-                stats[playerKey].tackles++;
-                break;
-            case 'Interception':
-                stats[playerKey].interceptions++;
-                break;
-            case 'Save':
-                stats[playerKey].saves++;
-                break;
+            // Initialize player stats if not already present
+            if (!stats[playerKey]) {
+                stats[playerKey] = {
+                    playerLoggerId,
+                    playerName,
+                    playerId,
+                    manualId,
+                    jerseyId,
+                    team,
+                    ageCategory,
+                    goals: 0,
+                    assists: 0,
+                    completePasses: 0,
+                    incompletePasses: 0,
+                    totalShots: 0,
+                    shotsOnTarget: 0,
+                    tackles: 0,
+                    interceptions: 0,
+                    saves: 0,
+                    ownGoals: 0
+                };
+            }
+
+            // Update player stats based on the action
+            switch (action) {
+                case 'Goal':
+                    stats[playerKey].goals++;
+                    stats[playerKey].shotsOnTarget++;
+                    stats[playerKey].totalShots++;
+                    break;
+                case "OwnGoal":
+                    stats[playerKey].ownGoals++;
+                    break;
+                case 'Assist':
+                    stats[playerKey].assists++;
+                    break;
+                case 'CompletePass':
+                    stats[playerKey].completePasses++;
+                    break;
+                case 'IncompletePass':
+                    stats[playerKey].incompletePasses++;
+                    break;
+                case 'ShotOnTarget':
+                    stats[playerKey].shotsOnTarget++;
+                    stats[playerKey].totalShots++;
+                    break;
+                case 'ShotOffTarget':
+                    stats[playerKey].totalShots++;
+                    break;
+                case 'Tackle':
+                    stats[playerKey].tackles++;
+                    break;
+                case 'Interception':
+                    stats[playerKey].interceptions++;
+                    break;
+                case 'Save':
+                    stats[playerKey].saves++;
+                    break;
+            }
         }
     });
 
@@ -700,6 +712,7 @@ function calculateStats() {
                 <tr>
                     <th>Player</th>
                     <th>Player Name</th>
+                    <th>Player ID</th>
                     <th>Manual ID</th>
                     <th>Jersey ID</th>
                     <th>Team</th>
@@ -728,8 +741,9 @@ function calculateStats() {
 
         statsTable += `
             <tr>
-                <td>${player.playerId}</td>
+                <td>${player.playerLoggerId}</td>
                 <td>${player.playerName}</td>
+                <td>${player.playerId}</td>
                 <td>${player.manualId || 'N/A'}</td>
                 <td>${player.jerseyId || 'N/A'}</td>
                 <td>${player.team || 'N/A'}</td>
@@ -761,7 +775,7 @@ function calculateStats() {
         <div class="stats-popup-content">
             <div class="stats-popup-header">
                 <h2>Player Statistics</h2>
-                <a href="#" class="download-button">Download as Excel</a>
+                <a href="#" class="download-button">Save and Download Excel</a>
                 <span class="close-button">&times;</span>
             </div>
             <div class="stats-container">
@@ -929,7 +943,7 @@ function calculateMatchStats(stats) {
         // Add passing accuracy for average calculation
         const totalPasses = completePasses + incompletePasses;
         if (totalPasses > 0) {
-            const passingAccuracy = (completePasses / totalPasses) * 100;
+            const passingAccuracy = Math.ceil((completePasses / totalPasses) * 100);
             teamStats[team].passingAccuracySum += passingAccuracy;
             teamStats[team].playersWithPasses += 1;
         }
@@ -961,17 +975,16 @@ function calculateMatchStats(stats) {
 
     for (const team in teamStats) {
         if (totalPasses > 0) {
-            teamStats[team].possession = (
-                ((teamStats[team].completePasses + teamStats[team].incompletePasses) / totalPasses) *
-                100
-            ).toFixed(2);
+            teamStats[team].possession = Math.ceil(
+                ((teamStats[team].completePasses + teamStats[team].incompletePasses) / totalPasses) * 100
+            );
         } else {
             teamStats[team].possession = 'N/A';
         }        
         if (teamStats[team].playersWithPasses > 0) {
-            teamStats[team].averagePassingAccuracy = `${(
+            teamStats[team].averagePassingAccuracy = `${Math.ceil(
                 teamStats[team].passingAccuracySum / teamStats[team].playersWithPasses
-            ).toFixed(2)}`;
+            )}`;
         } else {
             teamStats[team].averagePassingAccuracy = 'N/A';
         }
