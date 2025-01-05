@@ -84,7 +84,10 @@ document.getElementById('matchIdDropdown').addEventListener('change', (event) =>
           gameLogTextBox.value = actionLog.join('\n') + '\n';
           videoLog = game.videoLog
           gameHighlightsTextBox.value = videoLog.join('\n') + '\n';
-        
+            
+          document.getElementById('team-a-name').innerText = state.match.teamA;
+          document.getElementById('team-b-name').innerText = state.match.teamB;
+
           game.players.forEach(player => {
             addPlayerWithPresets(player["teamType"], player["Player"], player["Player ID"], player["Manual ID"], player["Jersey ID"], player["Player Name"])
           })
@@ -262,11 +265,6 @@ function showEditPopup(uniqueId) {
         players = state.match.teamBPlayers;
     }
 
-    const playerOptions = Object.keys(players)
-                        .map(player => `<option value="${player}">${player}</option>`)
-                        .join("");
-
-
     const content = `
         <h2>Edit Player Details</h2>
         <div class="edit-form">
@@ -377,7 +375,9 @@ function showEditMatchPopup(uniqueId) {
             id,
             teamA,
             teamB,
-            category
+            category,
+            teamAPlayers: state.match.teamAPlayers,
+            teamBPlayers: state.match.teamBPlayers,
         }
 
         document.getElementById('team-a-name').innerText = teamA;
