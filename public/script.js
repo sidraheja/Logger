@@ -1112,7 +1112,9 @@ async function exportTablesToZip() {
     const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
     const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
 
-    await updateMatchDatabase(state.match.id, matchStatsArray, actionLog, allHighlightsLog, playerStatsArray)
+    const matchId = state.match.id.replace(/ /g, "_");
+
+    await updateMatchDatabase(matchId, matchStatsArray, actionLog, allHighlightsLog, playerStatsArray)
     // Create a new workbook for Excel
     const wb = XLSX.utils.book_new();
 

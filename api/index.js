@@ -124,7 +124,8 @@ app.get('/api/games/:matchId', async (req, res) => {
 
 app.post('/api/games-stats/:matchId', async (req, res) => {
 
-  const { matchId } = req.params;
+  const [ matchId, ageCategory ] = req.params.matchId.split("_");
+
   const { gameStats, gameLog, videoLog, playerStats } = req.body;
 
   const game = await Game.findOne({ matchId });
@@ -136,7 +137,7 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
   const homeTeamId = game.home.teamId;
   const awayTeamId = game.away.teamId;
 
-  let gameStatsModel = await GameStats.findOne({ gameId: game._id });
+  let gameStatsModel = await GameStats.findOne({ gameId: game._id, ageCategory: ageCategory });
 
   if (!gameStatsModel) {
     gameStatsModel = new GameStats()
@@ -193,7 +194,7 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
 
   await UserStats.deleteMany({gameId: gameId})
 
-  playerStats.forEach(stats => {
+  for (const stats of playerStats) {
     if(index == 0) {
       titleArray = stats
       index = index + 1
@@ -205,19 +206,7 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
 
       let teamId = playerStats["Team"] == homeTeam["name"] ? homeTeamId : awayTeamId
 
-      let player = User.findOne({
-        name: playerStats["Player Name"], // Replace with the variable holding the player's name
-        playerId: playerStats["Player ID"], // Replace with the variable holding the player ID
-        teamId: teamId // Replace with the variables holding home and away team IDs
-      });
-
-      if(!player) {
-        player = User.create({
-          name: playerStats["Player Name"],
-          playerId: playerStats["Player ID"],
-          teamId: teamId
-        })
-      }
+      let player = await findOrCreatePlayer(playerStats, teamId)
 
       const playerDBStats = []
 
@@ -235,18 +224,34 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
         }
       });
 
-    
       UserStats.create({
         gameId: gameId, 
-        userId: player["_id"],
         teamId: teamId,
+        userId: player._id,
         stats: playerDBStats,
         identifiers: playerDBIdentifiers,
         team: teamId == homeTeamId ? "home" : "away"
       })
 
     }
-  })
+  }
+}
+
+async function findOrCreatePlayer(playerStats, teamId) {
+  let player = await User.findOne({
+    playerId: playerStats["Player ID"],
+    teamId: teamId
+  });
+
+  if (!player) {
+    player = await User.create({
+      name: playerStats["Player Name"],
+      playerId: playerStats["Player ID"],
+      teamId: teamId
+    });
+  }
+
+  return player;
 }
 
 // Uncomment to Run Locally Start the server
