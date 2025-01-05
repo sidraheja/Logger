@@ -1037,6 +1037,7 @@ function generateMatchStatsTable(playerStats) {
         }
     }
 
+    const firstPart = state.match.id.split(" ")[0];
 
     return `
         <table>
@@ -1095,8 +1096,8 @@ function generateMatchStatsTable(playerStats) {
                 </tr>
                 <tr>
                     <td>Match Number</td>
-                    <td>${state.match.id}</td>
-                    <td>${state.match.id}</td>
+                    <td>${firstPart}</td>
+                    <td>${firstPart}</td>
                 </tr>
             </tbody>
         </table>
