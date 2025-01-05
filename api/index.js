@@ -43,7 +43,7 @@ app.get('/api/games/:matchId', async (req, res) => {
 
   try {
     // Find the game by matchId
-    const game = await Game.findOne({ matchId });
+    const game = await Game.findOne({ matchId , ageCategory});
 
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
