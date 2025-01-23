@@ -154,7 +154,8 @@ function createPlayerButton(uniqueId, isOpposition = false) {
 
 function addPlayer(team) {
     const playedLoggerId = `${team[team.length - 1].toUpperCase()}${state[team].length}`
-    addPlayerWithPresets(team, playedLoggerId, playedLoggerId, 'N/A', 'N/A', 'N/A')
+    const uniqueId = addPlayerWithPresets(team, playedLoggerId, playedLoggerId, 'N/A', 'N/A', 'N/A')
+    logAction("Player Added" , uniqueId)
 }
 
 function addPlayerWithPresets(team, playerLoggerId, playerId, manualId, jerseyId, playerName) {
@@ -178,8 +179,8 @@ function addPlayerWithPresets(team, playerLoggerId, playerId, manualId, jerseyId
         teamBPlayerButtonsContainer.appendChild(button);
     }
 
-    logAction("Player Added" , uniqueId)
     updateTeamPlayerCount(team);
+    return uniqueId
 }
 
 function removePlayer(team) {

@@ -43,7 +43,7 @@ app.get('/api/games/:matchId', async (req, res) => {
 
   try {
     // Find the game by matchId
-    const game = await Game.findOne({ matchId , ageCategory});
+    const game = await Game.findOne({ match_id: parseInt(matchId) , ageCategory: ageCategory});
 
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
@@ -128,7 +128,7 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
 
   const { gameStats, gameLog, videoLog, playerStats } = req.body;
 
-  const game = await Game.findOne({ matchId });
+  const game = await Game.findOne({ match_id: parseInt(matchId) , ageCategory: ageCategory});
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
@@ -137,7 +137,7 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
   const homeTeamId = game.home.teamId;
   const awayTeamId = game.away.teamId;
 
-  let gameStatsModel = await GameStats.findOne({ gameId: game._id, ageCategory: ageCategory });
+  let gameStatsModel = await GameStats.findOne({ gameId: game._id });
 
   if (!gameStatsModel) {
     gameStatsModel = new GameStats()
@@ -175,7 +175,7 @@ app.post('/api/games-stats/:matchId', async (req, res) => {
     }
   });
 
-  gameStatsModel.save();
+  GameStats.create(gameStatsModel);
   saveUserGameStats(homeTeamId, awayTeamId, matchObjectId, playerStats);
 
   return res.status(200).json({
@@ -192,7 +192,7 @@ async function saveUserGameStats(homeTeamId, awayTeamId, gameId, playerStats) {
   let titleArray = []
   const homeTeam = await Team.findOne({ _id: homeTeamId });
 
-  await UserStats.deleteMany({gameId: gameId})
+  const deletedUsers = await UserStats.deleteMany({gameId: gameId})
 
   for (const stats of playerStats) {
     if(index == 0) {
