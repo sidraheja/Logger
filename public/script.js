@@ -1116,8 +1116,12 @@ async function exportTablesToZip() {
 
     const matchId = state.match.id.replace(/ /g, "_");
 
-    await updateMatchDatabase(matchId, matchStatsArray, actionLog, allHighlightsLog, playerStatsArray)
-    // Create a new workbook for Excel
+    try {
+        await updateMatchDatabase(matchId, matchStatsArray, actionLog, allHighlightsLog, playerStatsArray);
+    } catch (error) {
+        alert(`Failed to update game stats db. Please alert Sajal: ${response.statusText}`);
+    }
+
     const wb = XLSX.utils.book_new();
 
     // Convert arrays to worksheets
