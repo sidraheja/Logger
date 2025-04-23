@@ -16,15 +16,19 @@ const state = {
         start: "",
         stop: "",
         currentState: "START"
-    }
+    },
+    // New state for action selections
+    selectedPrimaryAction: null, // ID of the selected button in Attack, Defense, or GK
+    selectedSetPiece: null, // ID of the selected set piece button
+    selectedSpecialActions: [] // Array of IDs for selected special buttons
 };
 
 // Player details storage - using unique IDs as keys
 const playerDetailsMap = new Map();
-let actionLog = [];
-let highlightsLog = [];
-let allHighlightsLog = [];
-let videoPlayer;
+let actionLog = []; // Holds the raw log strings
+let highlightsLog = []; // Holds parsed highlight start/end points
+let allHighlightsLog = []; // Holds raw highlight text
+let videoPlayer; // YouTube player instance
 
 // DOM Elements
 const teamAPlayerButtonsContainer = document.getElementById('teamAPlayerButtons');
@@ -35,24 +39,22 @@ const addTeamAPlayerButton = document.getElementById('addTeamAPlayer');
 const addTeamBPlayerButton = document.getElementById('addTeamBPlayer');
 const removeTeamAPlayerButton = document.getElementById('removeTeamAPlayer');
 const removeTeamBPlayerButton = document.getElementById('removeTeamBPlayer');
-const teamAPassContainer = document.querySelector('.complete-pass .team-a-pass');
-const teamBPassContainer = document.querySelector('.complete-pass .team-b-pass');
-const teamAIncompletePassContainer = document.querySelector('.incomplete-pass .team-a-pass');
-const teamBIncompletePassContainer = document.querySelector('.incomplete-pass .team-b-pass');
 const gameLogTextBox = document.getElementById('gameLogTextBox');
 const gameHighlightsTextBox = document.getElementById('gameHighlightsTextBox');
 const popup = document.getElementById('popup');
 const playerEditPopup = document.getElementById('playerEditPopup');
 const layoutControls = document.querySelectorAll('input[name="layout"]');
+const logActionButton = document.getElementById('logActionButton'); // New Log Action Button
 
 const matchVideoPlayer = document.getElementById('matchVideoPlayer');
-const videoIdInput = document.getElementById('videoIdInput');
+// const videoIdInput = document.getElementById('videoIdInput'); // Not used with YouTube ID input
 const youtubeVideoIdInput = document.getElementById('youtubeVideoIdInput');
 const updateYoutubeVideoButton = document.getElementById('updateYoutubeVideoButton');
-let logTimestampButton;
+// let logTimestampButton; // Not currently used
 
-gameLogTextBox.removeAttribute('readonly');
-gameHighlightsTextBox.removeAttribute('readonly');
+// Make text areas editable by default if needed (though JS updates them)
+// gameLogTextBox.removeAttribute('readonly');
+// gameHighlightsTextBox.removeAttribute('readonly');
 
 // Initialize event listeners
 addTeamAPlayerButton.addEventListener('click', () => addPlayer('teamA'));
@@ -63,24 +65,153 @@ document.getElementById('undoButton').addEventListener('click', undoAction);
 document.getElementById('saveToHighlightsButton').addEventListener('click', startStopHighlights);
 document.getElementById('calculateStats').addEventListener('click', calculateStats);
 document.getElementById('setMatchDetails').addEventListener('click', showEditMatchPopup);
-// Add event listeners for all basic stat buttons
+logActionButton.addEventListener('click', logNewAction); // Listener for new log button
+updateYoutubeVideoButton.addEventListener('click', updateYouTubeVideo); // Listener for YouTube video update
 
-const statButtonShortcuts = {
-    "A": 'completePass', 
-    "D" : 'incompletePass', 
-    "S": 'goalBtn', 
-    "O": 'ownGoalBtn', 
-    "Q": 'assistBtn', 
-    "W": 'shotOnTargetBtn', 
-    "E": 'shotOffTargetBtn',
-    "Z": 'tackleBtn', 
-    "X": 'interceptionBtn', 
-    "C": 'saveBtn'
+// --- New Action Button Setup ---
+
+// Define button groups (IDs must match HTML)
+const primaryActionButtons = [
+    // Attack
+    'passBtn', 'longPassBtn', 'throughBallBtn', 'shotBallBtn', 'crossBtn', 'dribbleAttemptBtn', 'miscontrolBtn', 'noActionBtn', 'goalBtn',
+    // Defense
+    'defensiveActionBtn', 'clearanceBtn',
+    // GK
+    'saveBtn', 'catchBtn', 'punchBtn'
+];
+
+const setPieceButtons = [
+    'cornerBtn', 'freeKickBtn', 'penaltyBtn', 'outOfBoundsBtn'
+];
+
+const specialButtons = [
+    'headerBtn', 'woodworkBtn', 'moiBtn', 'aerialDuelBtn'
+];
+
+// Helper to add/remove 'selected' class safely
+function toggleSelectedClass(buttonId, force) {
+    const button = document.getElementById(buttonId);
+    if (button) {
+        if (force === true) {
+            button.classList.add('selected');
+        } else if (force === false) {
+            button.classList.remove('selected');
+        } else {
+            button.classList.toggle('selected');
+        }
+    } else {
+        console.warn(`Button with ID ${buttonId} not found for toggling class.`);
+    }
 }
 
-const basicStatButtons = Object.values(statButtonShortcuts).forEach(btnId => {
-    document.getElementById(btnId).addEventListener('click', () => handleBasicStat(btnId));
-});
+// Handle selection for primary actions (Attack, Defense, GK - only one overall)
+function handlePrimaryActionSelect(buttonId) {
+    if (state.selectedPrimaryAction === buttonId) {
+        // Clicking the same button deselects it
+        state.selectedPrimaryAction = null;
+        toggleSelectedClass(buttonId, false);
+    } else {
+        // Deselect previously selected primary action if it exists
+        if (state.selectedPrimaryAction) {
+            toggleSelectedClass(state.selectedPrimaryAction, false);
+        }
+        // Select the new one
+        state.selectedPrimaryAction = buttonId;
+        toggleSelectedClass(buttonId, true);
+    }
+}
+
+// Handle selection for set pieces (only one)
+function handleSetPieceSelect(buttonId) {
+    if (state.selectedSetPiece === buttonId) {
+        // Clicking the same button deselects it
+        state.selectedSetPiece = null;
+        toggleSelectedClass(buttonId, false);
+    } else {
+        // Deselect previously selected set piece if it exists
+        if (state.selectedSetPiece) {
+            toggleSelectedClass(state.selectedSetPiece, false);
+        }
+        // Select the new one
+        state.selectedSetPiece = buttonId;
+        toggleSelectedClass(buttonId, true);
+    }
+}
+
+// Handle selection for special actions (multiple allowed)
+function handleSpecialActionSelect(buttonId) {
+    const index = state.selectedSpecialActions.indexOf(buttonId);
+    if (index > -1) {
+        // Already selected, deselect it
+        state.selectedSpecialActions.splice(index, 1);
+        toggleSelectedClass(buttonId, false);
+    } else {
+        // Not selected, select it
+        state.selectedSpecialActions.push(buttonId);
+        toggleSelectedClass(buttonId, true);
+    }
+}
+
+// Add event listeners to new action buttons safely
+function setupActionButtons() {
+    primaryActionButtons.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', () => handlePrimaryActionSelect(id));
+        } else {
+            console.warn(`Primary action button with ID ${id} not found.`);
+        }
+    });
+
+    setPieceButtons.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', () => handleSetPieceSelect(id));
+        } else {
+            console.warn(`Set piece button with ID ${id} not found.`);
+        }
+    });
+
+    specialButtons.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', () => handleSpecialActionSelect(id));
+        } else {
+            console.warn(`Special action button with ID ${id} not found.`);
+        }
+    });
+}
+
+// Call the setup function once the DOM is ready
+document.addEventListener('DOMContentLoaded', setupActionButtons);
+
+
+// Function to reset action selections (buttons and state)
+function resetActionSelections() {
+    if (state.selectedPrimaryAction) {
+        toggleSelectedClass(state.selectedPrimaryAction, false);
+    }
+    if (state.selectedSetPiece) {
+        toggleSelectedClass(state.selectedSetPiece, false);
+    }
+    state.selectedSpecialActions.forEach(id => toggleSelectedClass(id, false));
+
+    state.selectedPrimaryAction = null;
+    state.selectedSetPiece = null;
+    state.selectedSpecialActions = [];
+
+    // Also deselect player
+    if (state.selectedPlayerId) {
+        const playerButtons = document.querySelectorAll('.team-section-container .player-button.selected');
+        playerButtons.forEach(button => {
+            button.classList.remove('selected');
+        });
+        state.selectedPlayerId = null;
+    }
+}
+
+// --- End New Action Button Setup ---
+
 
 // Layout radio buttons event listener
 layoutControls.forEach(radio => {
@@ -99,7 +230,7 @@ function generateUniqueId() {
 function createPlayerButton(uniqueId, isOpposition = false) {
     const button = document.createElement('button');
     button.classList.add('player-button');
-    if (isOpposition) button.classList.add('opposition');
+    if (isOpposition) button.classList.add('opposition'); // Mark opposition visually if needed
     button.dataset.uniqueId = uniqueId;
 
     const textSpan = document.createElement('span');
@@ -107,552 +238,736 @@ function createPlayerButton(uniqueId, isOpposition = false) {
     button.appendChild(textSpan);
 
     const editIcon = document.createElement('span');
-    editIcon.innerHTML = '✎';
+    editIcon.innerHTML = '✎'; // Use an actual icon or text symbol
     editIcon.classList.add('edit-icon');
+    editIcon.title = "Edit Player Details"; // Tooltip
     editIcon.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent player selection when clicking icon
         showEditPopup(uniqueId);
     });
 
     button.appendChild(editIcon);
-    updatePlayerButtonText(button);
+    updatePlayerButtonText(button); // Set initial text
     return button;
 }
 
+// Add a new player to a team
 function addPlayer(team) {
     const uniqueId = generateUniqueId();
+    const teamLetter = team === 'teamA' ? 'A' : 'B';
+    const nextPlayerNum = state[team].length + 1;
+
     state[team].push(uniqueId);
     playerDetailsMap.set(uniqueId, {
-        playerId: `${team[team.length - 1].toUpperCase()}${state[team].length}`,
+        playerId: `${teamLetter}${nextPlayerNum}`, // Default PID like A1, A2, B1...
         manualId: 'N/A',
         jerseyId: 'N/A',
-        playerName: "N/A",
+        playerName: "Player " + nextPlayerNum, // Default name
         team: team
     });
 
-    const button = createPlayerButton(uniqueId, team === 'teamB');
+    const button = createPlayerButton(uniqueId, team === 'teamB'); // Pass opposition flag
     button.addEventListener('click', () => handlePlayerSelection(uniqueId));
 
-    if (team === 'teamA') {
-        teamAPlayerButtonsContainer.appendChild(button);
-    } else {
-        teamBPlayerButtonsContainer.appendChild(button);
-    }
+    const container = team === 'teamA' ? teamAPlayerButtonsContainer : teamBPlayerButtonsContainer;
+    container.appendChild(button);
 
-    console.log(state)
-
+    console.log(`Added player ${uniqueId} to ${team}. Current state:`, state);
     updateTeamPlayerCount(team);
 }
 
+// Remove the last added player from a team
 function removePlayer(team) {
     if (state[team].length > 0) {
-        const uniqueId = state[team].pop();
-        playerDetailsMap.delete(uniqueId);
+        const uniqueId = state[team].pop(); // Get the last player's ID
+        const details = playerDetailsMap.get(uniqueId); // Get details for logging/alerting
+        playerDetailsMap.delete(uniqueId); // Remove from map
 
-        if (team === 'teamA') {
-            teamAPlayerButtonsContainer.removeChild(teamAPlayerButtonsContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
+        const container = team === 'teamA' ? teamAPlayerButtonsContainer : teamBPlayerButtonsContainer;
+        const buttonToRemove = container.querySelector(`[data-unique-id="${uniqueId}"]`);
+        if (buttonToRemove) {
+            container.removeChild(buttonToRemove);
         } else {
-            teamBPlayerButtonsContainer.removeChild(teamBPlayerButtonsContainer.querySelector(`[data-unique-id="${uniqueId}"]`));
+             console.warn(`Could not find button for removed player ${uniqueId}`);
         }
 
+        // If the removed player was selected, clear selection
+        if (state.selectedPlayerId === uniqueId) {
+            state.selectedPlayerId = null;
+        }
+
+        console.log(`Removed player ${details?.playerId || uniqueId} from ${team}.`);
         updateTeamPlayerCount(team);
-    }
-}
-
-function updateTeamPlayerCount(team) {
-    if (team === 'teamA') {
-        teamAPlayerCount.textContent = state.teamA.length;
     } else {
-        teamBPlayerCount.textContent = state.teamB.length;
+        console.log(`No players to remove from ${team}.`);
     }
 }
 
-// Update button text based on current layout
+// Update the displayed player count for a team
+function updateTeamPlayerCount(team) {
+    const countElement = team === 'teamA' ? teamAPlayerCount : teamBPlayerCount;
+    countElement.textContent = state[team].length;
+}
+
+// Update button text based on current layout selection
 function updatePlayerButtonText(button) {
     const uniqueId = button.dataset.uniqueId;
     const details = playerDetailsMap.get(uniqueId);
     const textSpan = button.querySelector('.player-text');
-    
-    if (textSpan) {
+
+    if (textSpan && details) { // Ensure elements and data exist
+        let displayText = details.playerId; // Default to PID
         switch (state.currentLayout) {
-        case 'manual':
-            textSpan.textContent = details.manualId;
-            break;
-        case 'jersey':
-            textSpan.textContent = details.jerseyId;
-            break;
-        default: // pid layout
-            textSpan.textContent = details.playerId;
+            case 'manual':
+                displayText = details.manualId || 'N/A';
+                break;
+            case 'jersey':
+                displayText = details.jerseyId || 'N/A';
+                break;
+            // 'pid' case falls through to default
         }
+        textSpan.textContent = displayText;
+    } else if (!details) {
+        console.warn(`Player details not found for button with uniqueId: ${uniqueId}`);
+        if(textSpan) textSpan.textContent = "Error";
     }
 }
 
-// Handle player selection
+// Handle player button clicks for selection
 function handlePlayerSelection(uniqueId) {
-    const buttons = document.querySelectorAll('.team-section-container .player-button');
-    buttons.forEach(button => {
-        if (button.dataset.uniqueId === uniqueId) {
-            if (button.classList.contains('selected')) {
-                button.classList.remove('selected');
-                state.selectedPlayerId = null;
-            } else {
-                button.classList.add('selected');
-                state.selectedPlayerId = uniqueId;
-            }
-        } else {
-            button.classList.remove('selected');
-        }
-    });
-}
+    const allPlayerButtons = document.querySelectorAll('.team-section-container .player-button');
+    const clickedButton = document.querySelector(`.player-button[data-unique-id="${uniqueId}"]`);
 
-// Mark selected player as opposition
-function markAsOpposition() {
-    if (!state.selectedPlayerId) {
-        alert('Select a player');
-        return;
+    if (!clickedButton) return;
+
+    // Check if the clicked button is already selected
+    const isAlreadySelected = clickedButton.classList.contains('selected');
+
+    // First, remove 'selected' class from all buttons
+    allPlayerButtons.forEach(button => {
+        button.classList.remove('selected');
+    });
+
+    // If the clicked button was not already selected, select it
+    if (!isAlreadySelected) {
+        clickedButton.classList.add('selected');
+        state.selectedPlayerId = uniqueId;
+        console.log(`Player selected: ${uniqueId}`);
+    } else {
+        // If it was already selected, deselect it (already done by removing class from all)
+        state.selectedPlayerId = null;
+        console.log(`Player deselected: ${uniqueId}`);
     }
-
-    const buttons = document.querySelectorAll(`[data-unique-id="${state.selectedPlayerId}"]`);
-    buttons.forEach(button => {
-        button.classList.toggle('opposition');
-    });
 }
 
-// Show edit popup for player details
+
+// Show popup to edit player details
 function showEditPopup(uniqueId) {
     const details = playerDetailsMap.get(uniqueId);
+    if (!details) {
+        console.error("Cannot edit: Player details not found for uniqueId:", uniqueId);
+        alert("Error: Player details not found.");
+        return;
+    }
+    // Generate HTML content for the popup form
     const content = `
         <h2>Edit Player Details</h2>
         <div class="edit-form">
             <div class="form-group">
-                <label for="playerId">Player ID:</label>
-                <input type="text" id="playerId" value="${details.playerId}" readonly>
+                <label for="editPlayerId">Player ID (PID):</label>
+                <input type="text" id="editPlayerId" value="${details.playerId}" readonly>
             </div>
             <div class="form-group">
-                <label for="manualId">Manual ID:</label>
-                <input type="text" id="manualId" value="${details.manualId}">
+                <label for="editManualId">Manual ID:</label>
+                <input type="text" id="editManualId" value="${details.manualId === 'N/A' ? '' : details.manualId}" placeholder="Enter Manual ID">
             </div>
             <div class="form-group">
-                <label for="jerseyId">Jersey ID:</label>
-                <input type="text" id="jerseyId" value="${details.jerseyId}">
+                <label for="editJerseyId">Jersey ID:</label>
+                <input type="text" id="editJerseyId" value="${details.jerseyId === 'N/A' ? '' : details.jerseyId}" placeholder="Enter Jersey Number">
             </div>
             <div class="form-group">
-                <label for="playerName">Player Name:</label>
-                <input type="text" id="playerName" value="${details.playerName}">
+                <label for="editPlayerName">Player Name:</label>
+                <input type="text" id="editPlayerName" value="${details.playerName === 'N/A' ? '' : details.playerName}" placeholder="Enter Player Name">
             </div>
-            <button id="savePlayerDetails">Save</button>
+            <button id="savePlayerDetailsBtn">Save Changes</button>
         </div>
     `;
-    
-    playerEditPopup.querySelector('.popup-content').innerHTML = content;
-    playerEditPopup.dataset.uniqueId = uniqueId;
-    playerEditPopup.style.display = 'flex';
-    
-    document.getElementById('savePlayerDetails').addEventListener('click', () => {
-        savePlayerDetails();
-    });
+
+    // Populate and display the player edit popup
+    const popupContentDiv = playerEditPopup.querySelector('.popup-content');
+    if (!popupContentDiv) {
+       console.error("Player edit popup content area not found.");
+       return;
+    }
+    popupContentDiv.innerHTML = content; // Inject the form
+     // Add the close button back if it was overwritten
+    if (!popupContentDiv.querySelector('.close')) {
+        const closeBtn = document.createElement('span');
+        closeBtn.classList.add('close');
+        closeBtn.innerHTML = '×';
+        closeBtn.onclick = () => playerEditPopup.style.display = 'none';
+        popupContentDiv.prepend(closeBtn); // Add close button at the top
+    }
+
+
+    playerEditPopup.dataset.uniqueId = uniqueId; // Store ID for saving
+    playerEditPopup.style.display = 'flex'; // Show the popup
+
+    // Add event listener for the save button within the popup
+    const saveButton = popupContentDiv.querySelector('#savePlayerDetailsBtn');
+     if (saveButton) {
+        // Remove previous listener if any to avoid duplicates
+        saveButton.replaceWith(saveButton.cloneNode(true));
+        playerEditPopup.querySelector('#savePlayerDetailsBtn').addEventListener('click', () => {
+            savePlayerDetails(uniqueId);
+        });
+    } else {
+         console.error("Save button not found in player edit popup.");
+    }
 }
 
-// Show edit popup for player details
-function showEditMatchPopup(uniqueId) {
-    const matchDetails = state.match
-    console.log(matchDetails)
+// Show popup to edit match details
+function showEditMatchPopup() {
+    const matchDetails = state.match;
+    console.log("Editing Match Details:", matchDetails);
 
     const content = `
-        <h2>Edit Player Details</h2>
+        <h2>Edit Match Details</h2>
         <div class="edit-form">
             <div class="form-group">
-                <label for="matchId">Match Id:</label>
-                <input type="text" id="matchId" value="${matchDetails.id}">
+                <label for="matchId">Match ID:</label>
+                <input type="text" id="matchId" value="${matchDetails.id || ''}" placeholder="e.g., YYYYMMDD_TeamAvsTeamB">
             </div>
             <div class="form-group">
                 <label for="teamAName">Team A Name:</label>
-                <input type="text" id="teamAName" value="${matchDetails.teamA}">
+                <input type="text" id="teamAName" value="${matchDetails.teamA || 'Team A'}" placeholder="Enter Team A name">
             </div>
             <div class="form-group">
                 <label for="teamBName">Team B Name:</label>
-                <input type="text" id="teamBName" value="${matchDetails.teamB}">
+                <input type="text" id="teamBName" value="${matchDetails.teamB || 'Team B'}" placeholder="Enter Team B name">
             </div>
             <div class="form-group">
                 <label for="category">Age Category:</label>
-                <input type="text" id="category" value="${matchDetails.category}">
+                <input type="text" id="category" value="${matchDetails.category || ''}" placeholder="e.g., U18, Senior">
             </div>
-            <button id="saveMatchDetails">Save</button>
+            <button id="saveMatchDetailsBtn">Save Match Details</button>
         </div>
     `;
-    
-    playerEditPopup.querySelector('.popup-content').innerHTML = content;
-    playerEditPopup.dataset.uniqueId = uniqueId;
-    playerEditPopup.style.display = 'flex';
-    
-    document.getElementById('saveMatchDetails').addEventListener('click', () => {
-        const id = document.getElementById('matchId').value;
-        const teamA = document.getElementById('teamAName').value || 'N/A';
-        const teamB = document.getElementById('teamBName').value || 'N/A';
-        const category = document.getElementById('category').value || 'N/A';
-        
-        // Update the details in the map
-        state.match = {
-            id,
-            teamA,
-            teamB,
-            category
-        }
 
-        document.getElementById('team-a-name').innerText = teamA;
-        document.getElementById('team-b-name').innerText = teamB;
+    // Use the general popup, configure content
+    const popupContentDiv = playerEditPopup.querySelector('.popup-content'); // Reuse player edit popup structure
+     if (!popupContentDiv) {
+       console.error("Match edit popup content area not found.");
+       return;
+    }
+    popupContentDiv.innerHTML = content;
+     // Add the close button back if it was overwritten
+    if (!popupContentDiv.querySelector('.close')) {
+        const closeBtn = document.createElement('span');
+        closeBtn.classList.add('close');
+        closeBtn.innerHTML = '×';
+        closeBtn.onclick = () => playerEditPopup.style.display = 'none';
+        popupContentDiv.prepend(closeBtn); // Add close button at the top
+    }
 
-        // Close the popup
-        playerEditPopup.style.display = 'none';
-    });
+    playerEditPopup.style.display = 'flex'; // Show the reused popup
+
+    // Add event listener for the save button within the popup
+     const saveButton = popupContentDiv.querySelector('#saveMatchDetailsBtn');
+     if (saveButton) {
+         // Remove previous listener to avoid duplicates
+        saveButton.replaceWith(saveButton.cloneNode(true));
+        playerEditPopup.querySelector('#saveMatchDetailsBtn').addEventListener('click', saveMatchDetails);
+     } else {
+         console.error("Save button not found in match edit popup.");
+     }
 }
 
-// Save player details from popup
-function savePlayerDetails() {
-    const uniqueId = playerEditPopup.dataset.uniqueId;
-    const playerId = document.getElementById('playerId').value;
-    const manualId = document.getElementById('manualId').value || 'N/A';
-    const jerseyId = document.getElementById('jerseyId').value || 'N/A';
-    const playerName = document.getElementById('playerName').value || 'N/A';
-    playerDetails = playerDetailsMap.get(uniqueId)
-    team = playerDetails.team
-    
-    // Update the details in the map
-    playerDetailsMap.set(uniqueId, {
-        playerId,
-        manualId,
-        jerseyId,
-        playerName,
-        team
-    });
-    
-    // Update all buttons to reflect changes
-    document.querySelectorAll(`[data-unique-id="${uniqueId}"]`).forEach(button => {
-        updatePlayerButtonText(button);
-    });
-    
+// Save updated match details from the popup
+function saveMatchDetails() {
+    const id = document.getElementById('matchId')?.value.trim() || state.match.id; // Keep old if empty
+    const teamA = document.getElementById('teamAName')?.value.trim() || 'Team A';
+    const teamB = document.getElementById('teamBName')?.value.trim() || 'Team B';
+    const category = document.getElementById('category')?.value.trim() || state.match.category;
+
+    // Update the global state
+    state.match = { id, teamA, teamB, category };
+
+    // Update team name displays in the UI
+    document.getElementById('team-a-name').innerText = teamA;
+    document.getElementById('team-b-name').innerText = teamB;
+
+    console.log("Match details updated:", state.match);
+
     // Close the popup
     playerEditPopup.style.display = 'none';
 }
 
-// Update all player buttons text based on current layout
+
+// Save updated player details from the popup
+function savePlayerDetails(uniqueId) {
+    // const uniqueId = playerEditPopup.dataset.uniqueId; // Get ID from popup data attribute
+    const details = playerDetailsMap.get(uniqueId);
+
+    if (!details) {
+        console.error("Cannot save: Player details not found for uniqueId:", uniqueId);
+        alert("Error saving: Player details not found.");
+        playerEditPopup.style.display = 'none'; // Close popup even on error
+        return;
+    }
+
+    // Get values from the popup form inputs
+    const manualId = document.getElementById('editManualId')?.value.trim() || 'N/A';
+    const jerseyId = document.getElementById('editJerseyId')?.value.trim() || 'N/A';
+    const playerName = document.getElementById('editPlayerName')?.value.trim() || 'N/A';
+
+    // Update the details in the map (keep existing playerId and team)
+    playerDetailsMap.set(uniqueId, {
+        ...details, // Spread existing details first
+        manualId: manualId || 'N/A', // Ensure 'N/A' if empty
+        jerseyId: jerseyId || 'N/A',
+        playerName: playerName || 'N/A',
+    });
+
+    console.log(`Player details updated for ${uniqueId}:`, playerDetailsMap.get(uniqueId));
+
+    // Update all buttons displaying this player's info
+    document.querySelectorAll(`[data-unique-id="${uniqueId}"]`).forEach(button => {
+        updatePlayerButtonText(button);
+    });
+
+    // Close the popup
+    playerEditPopup.style.display = 'none';
+}
+
+// Update text on all player buttons (e.g., after layout change)
 function updateAllPlayerButtons() {
     document.querySelectorAll('.player-button').forEach(updatePlayerButtonText);
 }
 
-// Handle basic stat button clicks
-function handleBasicStat(btnId) {
+// Log the currently selected action combination
+function logNewAction() {
     if (!state.selectedPlayerId) {
-        alert('Select a player first');
+        alert('Please select a player first.');
         return;
     }
+    if (!state.selectedPrimaryAction && !state.selectedSetPiece && state.selectedSpecialActions.length === 0) {
+         alert('Please select at least one action (Primary, Set Piece, or Special).');
+         return;
+    }
 
-    const statType = btnId.replace('Btn', '');
-    logAction(statType.charAt(0).toUpperCase() + statType.slice(1), state.selectedPlayerId);
+
+    const details = playerDetailsMap.get(state.selectedPlayerId);
+    if (!details) {
+         alert('Error: Selected player details not found.');
+         console.error("Details missing for selected player:", state.selectedPlayerId);
+         return;
+    }
+
+    // Get text labels from selected buttons (handle potential missing buttons)
+    const primaryActionButton = state.selectedPrimaryAction ? document.getElementById(state.selectedPrimaryAction) : null;
+    const actionText = primaryActionButton ? (primaryActionButton.textContent?.split(' (')[0].trim() || 'Unknown Action') : 'No Action';
+
+    const setPieceButton = state.selectedSetPiece ? document.getElementById(state.selectedSetPiece) : null;
+    const setPieceText = setPieceButton ? (setPieceButton.textContent?.split(' (')[0].trim() || 'Unknown Set Piece') : 'N/A';
+
+    const specialTexts = state.selectedSpecialActions.length > 0
+        ? state.selectedSpecialActions
+            .map(id => document.getElementById(id)?.textContent?.split(' (')[0].trim() || '')
+            .filter(text => text) // Remove empty strings if button not found
+            .join(', ')
+        : 'N/A';
+
+    const timestamp = getVideoPlayerTimeStamp(); // Get current video time
+
+    // Construct the log entry string
+    const logEntry = `Set Piece: ${setPieceText} | ID: ${details.playerId} | Jersey: ${details.jerseyId} | Manual: ${details.manualId} | Name: ${details.playerName} | Action: ${actionText} | Special: ${specialTexts} | Timestamp: ${timestamp}`;
+
+    actionLog.push(logEntry); // Add to internal log array
+    gameLogTextBox.value += logEntry + '\n'; // Append to text area
+    gameLogTextBox.scrollTop = gameLogTextBox.scrollHeight; // Scroll to bottom
+
+    showGreenTick(logEntry); // Display confirmation message
+    copyToClipboard(); // Copy logs to clipboard automatically
+    resetActionSelections(); // Clear selected buttons and player for next action
 }
 
-// Log action with player details
-function logAction(action, uniqueId) {
-    const details = playerDetailsMap.get(uniqueId);
-    const logEntry = `${action} - ${details.playerId} : ${details.manualId} : ${details.jerseyId} : ${details.playerName} : ${uniqueId} - ${getVideoPlayerTimeStamp()}`;
-    actionLog.push(logEntry);
-    gameLogTextBox.value += logEntry + '\n';
-    showGreenTick(logEntry);
-    copyToClipboard();
-}
 
+// Get the display text for a player based on the current layout setting
 function getPlayerDisplayText(uniqueId) {
     const details = playerDetailsMap.get(uniqueId);
+    if (!details) return 'Unknown Player'; // Fallback
+
     switch (state.currentLayout) {
         case 'manual':
-            return details.manualId;
+            return details.manualId || 'N/A';
         case 'jersey':
-            return details.jerseyId;
-        default:
-            return details.playerId;
+            return details.jerseyId || 'N/A';
+        default: // 'pid' or any other case
+            return details.playerId || 'N/A';
     }
 }
 
-// Undo last action
+// Undo the last logged action
 function undoAction() {
     if (actionLog.length > 0) {
-        const lastAction = actionLog.pop();
-        gameLogTextBox.value = actionLog.join('\n') + '\n';
-        alert(`Undone: ${lastAction}`);
+        const lastAction = actionLog.pop(); // Remove last entry from array
+
+        // Update the text area by rebuilding its content from the modified array
+        gameLogTextBox.value = actionLog.join('\n') + (actionLog.length > 0 ? '\n' : ''); // Add trailing newline if not empty
+
+        alert(`Action removed:\n${lastAction}`); // Show what was undone
+        copyToClipboard(); // Update clipboard content
     } else {
-        alert("No actions to undo.");
+        alert("No actions in the log to undo.");
     }
-    copyToClipboard();
 }
 
-// Copy to clipboard utility
+// Copy current log and highlights content to the clipboard
 function copyToClipboard() {
-    const clipboardContent = `Game Log:
-    ${gameLogTextBox.value}
-    --------
-    Game Highlights:
-    ${gameHighlightsTextBox.value}`;
+    const clipboardContent = `Game Log:\n${gameLogTextBox.value}\n--------\nGame Highlights:\n${gameHighlightsTextBox.value}`;
 
     navigator.clipboard.writeText(clipboardContent).then(() => {
-        console.log('Content copied to clipboard');
+        console.log('Log and Highlights copied to clipboard.');
     }).catch(err => {
-        console.error('Failed to copy: ', err);
+        console.error('Failed to copy to clipboard: ', err);
+        // Might fail in insecure contexts or if permissions denied
+        // alert('Failed to copy to clipboard. Your browser might not support this feature or requires permissions.');
     });
-} 
-
-function createPlayerCheckboxes() {
-    const playerIds = [...state.teamA, ...state.teamB];
-    return playerIds.map(uniqueId => {
-        const details = playerDetailsMap.get(uniqueId);
-        const displayText = getPlayerDisplayText(uniqueId);
-        return `
-            <div>
-                <input type="checkbox" id="player_${uniqueId}" class="player-checkbox" data-unique-id="${uniqueId}">
-                <label for="player_${uniqueId}">${displayText}</label>
-            </div>
-        `;
-    }).join('');
 }
 
+// Create checkboxes for player selection in the highlights popup
+function createPlayerCheckboxes() {
+    const playerIds = [...state.teamA, ...state.teamB]; // Combine players from both teams
+    if (playerIds.length === 0) {
+        return "<p>No players added yet.</p>";
+    }
+
+    return playerIds.map(uniqueId => {
+        const details = playerDetailsMap.get(uniqueId);
+        if (!details) return ''; // Skip if details somehow missing
+        const displayText = getPlayerDisplayText(uniqueId); // Get name/ID based on layout
+        return `
+            <div>
+                <input type="checkbox" id="highlight_player_${uniqueId}" class="player-checkbox" data-unique-id="${uniqueId}">
+                <label for="highlight_player_${uniqueId}">${displayText}</label>
+            </div>
+        `;
+    }).join(''); // Join the HTML strings
+}
+
+// Start or stop recording a highlight clip
 function startStopHighlights() {
     const button = document.getElementById('saveToHighlightsButton');
+    const currentTime = getVideoPlayerTimeStamp();
 
-    if (state.highlights.currentState == "START") {
-        console.log("Start")
+    if (state.highlights.currentState === "START") {
+        // Start recording
+        state.highlights.start = currentTime;
+        state.highlights.currentState = "STOP";
         button.innerText = "Stop Highlight (H)";
-        button.style.backgroundColor = "#0000FF"; // Change color to red
-        state.highlights.start = getVideoPlayerTimeStamp()
-        state.highlights.currentState = "STOP"
+        button.style.backgroundColor = "#dc3545"; // Red color for stopping
+        console.log("Highlight recording started at:", state.highlights.start);
     } else {
-        console.log("Stop")
+        // Stop recording
+        state.highlights.stop = currentTime;
+        state.highlights.currentState = "START";
         button.innerText = "Save Highlight (H)";
-        state.highlights.currentState = "START"
-        button.style.backgroundColor = "#4CAF50"; // Change color to red
-        state.highlights.stop = getVideoPlayerTimeStamp()
-        videoPlayer.pauseVideo()
-        showHighlightsPopup()
+        button.style.backgroundColor = "#4CAF50"; // Back to green
+        console.log("Highlight recording stopped at:", state.highlights.stop);
+
+        // Pause video if possible
+        if (videoPlayer && typeof videoPlayer.pauseVideo === 'function') {
+            videoPlayer.pauseVideo();
+        }
+        showHighlightsPopup(); // Show popup to add details
     }
 }
 
-// Show highlights popup
+// Show the popup for adding highlight details
 function showHighlightsPopup() {
     const content = `
         <div class="highlights-popup-content">
-            <h2>Add to Highlights</h2>
+            <h2>Add Highlight Details</h2>
             <div class="highlights-form">
                 <div class="form-group">
                     <label for="startTimestamp">Start Timestamp:</label>
-                    <input type="text" id="startTimestamp" placeholder="Enter start timestamp">
+                    <input type="text" id="startTimestamp" value="${state.highlights.start || ''}" placeholder="HH:MM:SS">
                 </div>
                 <div class="form-group">
                     <label for="endTimestamp">Stop Timestamp:</label>
-                    <input type="text" id="endTimestamp" placeholder="Enter end timestamp">
+                    <input type="text" id="endTimestamp" value="${state.highlights.stop || ''}" placeholder="HH:MM:SS">
                 </div>
                 <div class="form-group">
                     <label for="notes">Notes:</label>
-                    <textarea id="notes" placeholder="Enter notes"></textarea>
+                    <textarea id="notes" placeholder="Describe the highlight..."></textarea>
                 </div>
-                <div class="highlights-players">
-                    ${createPlayerCheckboxes()}
+                <div class="form-group">
+                     <label>Players Involved (Optional):</label>
+                     <div class="highlights-players">
+                        ${createPlayerCheckboxes()}
+                     </div>
                 </div>
                 <div class="popup-buttons">
-                    <button id="cancelHighlights">Close</button>
-                    <button id="saveHighlights">Save</button>
+                    <button id="cancelHighlights">Cancel</button>
+                    <button id="saveHighlights">Save Highlight</button>
                 </div>
             </div>
         </div>
     `;
-    
-    popup.querySelector('.popup-content').innerHTML = content;
-    popup.style.display = 'flex';
-    
-    document.getElementById('cancelHighlights').addEventListener('click', () => {
-        state.highlights.stop = ""
-        state.highlights.start = ""
-        popup.style.display = 'none';
-    });
 
-    const endTimestampInput = document.getElementById('endTimestamp');
-    if (endTimestampInput) {
-        endTimestampInput.value = state.highlights.stop;
+    // Populate and display the general popup
+    const popupContentDiv = popup.querySelector('.popup-content');
+    if (!popupContentDiv) {
+       console.error("Highlights popup content area not found.");
+       return;
+    }
+    popupContentDiv.innerHTML = content;
+    // Add the close button back if it was overwritten
+    if (!popupContentDiv.querySelector('.close')) {
+        const closeBtn = document.createElement('span');
+        closeBtn.classList.add('close');
+        closeBtn.innerHTML = '×';
+        closeBtn.onclick = () => {
+            popup.style.display = 'none';
+            resetHighlightState(); // Reset state if cancelled
+        };
+        popupContentDiv.prepend(closeBtn); // Add close button at the top
     }
 
-    const startTimestampInput = document.getElementById('startTimestamp');
-    if (startTimestampInput) {
-        startTimestampInput.value = state.highlights.start;
+
+    popup.style.display = 'flex'; // Show the popup
+
+    // Add event listeners for buttons inside the popup
+    const cancelButton = popupContentDiv.querySelector('#cancelHighlights');
+    const saveButton = popupContentDiv.querySelector('#saveHighlights');
+
+    if (cancelButton) {
+        cancelButton.onclick = () => {
+            popup.style.display = 'none';
+            resetHighlightState();
+        };
     }
-    
-    document.getElementById('saveHighlights').addEventListener('click', () => {
-        const startTimestamp = document.getElementById('startTimestamp').value;
-        const endTimestamp = document.getElementById('endTimestamp').value;
-        const notes = document.getElementById('notes').value;
-        const selectedPlayers = Array.from(document.querySelectorAll('.player-checkbox:checked'))
-            .map(checkbox => {
-                const uniqueId = checkbox.dataset.uniqueId;
-                return getPlayerDisplayText(uniqueId);
-            });
-        
-        const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}\nPlayers selected: ${selectedPlayers.join(', ')}`;
-        gameHighlightsTextBox.value += (gameHighlightsTextBox.value ? '\n\n' : '') + highlightEntry;
-        popup.style.display = 'none';
-        state.highlights.stop = ""
-        state.highlights.start = ""
-        showGreenTick(highlightEntry);
-        copyToClipboard();
-    });
+    if (saveButton) {
+        saveButton.onclick = () => {
+            saveHighlightDetails();
+            popup.style.display = 'none';
+            resetHighlightState();
+        };
+    }
+}
+// Reset highlight start/stop times
+function resetHighlightState() {
+    state.highlights.start = "";
+    state.highlights.stop = "";
+    // Keep currentState as "START"
 }
 
-// Close popup handlers
+
+// Save the highlight details from the popup to the log
+function saveHighlightDetails() {
+    const startTimestamp = document.getElementById('startTimestamp')?.value.trim() || 'N/A';
+    const endTimestamp = document.getElementById('endTimestamp')?.value.trim() || 'N/A';
+    const notes = document.getElementById('notes')?.value.trim() || 'No notes.';
+    const selectedPlayers = Array.from(document.querySelectorAll('.player-checkbox:checked'))
+        .map(checkbox => {
+            const uniqueId = checkbox.dataset.uniqueId;
+            return getPlayerDisplayText(uniqueId); // Use consistent display text
+        });
+
+    const playersText = selectedPlayers.length > 0 ? selectedPlayers.join(', ') : 'None';
+
+    // Construct the highlight entry string
+    const highlightEntry = `Inpoint: ${startTimestamp}\nOutpoint: ${endTimestamp}\nNotes: ${notes}\nPlayers: ${playersText}`;
+
+    // Append to the highlights text area
+    gameHighlightsTextBox.value += (gameHighlightsTextBox.value ? '\n\n---\n\n' : '') + highlightEntry; // Add separator
+    gameHighlightsTextBox.scrollTop = gameHighlightsTextBox.scrollHeight; // Scroll to bottom
+
+    showGreenTick("Highlight Saved!"); // Confirmation
+    copyToClipboard(); // Update clipboard
+}
+
+
+// Close popup handlers (for the close 'X' button)
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.addEventListener('click', () => {
-        closeBtn.closest('.popup').style.display = 'none';
+        // Find the closest parent popup and hide it
+        const parentPopup = closeBtn.closest('.popup');
+        if (parentPopup) {
+            parentPopup.style.display = 'none';
+            // If it was the highlights popup being closed, reset state
+            if (parentPopup === popup) {
+                resetHighlightState();
+                // Ensure highlight button is reset if needed
+                 const hButton = document.getElementById('saveToHighlightsButton');
+                 if(state.highlights.currentState === 'STOP') { // If closed while "recording"
+                     state.highlights.currentState = "START";
+                     hButton.innerText = "Save Highlight (H)";
+                     hButton.style.backgroundColor = "#4CAF50";
+                 }
+            }
+        }
     });
 });
 
-// Close popups when clicking outside
+// Close popups when clicking on the background overlay
 window.addEventListener('click', (e) => {
     if (e.target.classList.contains('popup')) {
         e.target.style.display = 'none';
+         // If it was the highlights popup being closed, reset state
+        if (e.target === popup) {
+             resetHighlightState();
+             // Ensure highlight button is reset if needed
+             const hButton = document.getElementById('saveToHighlightsButton');
+             if(state.highlights.currentState === 'STOP') { // If closed while "recording"
+                 state.highlights.currentState = "START";
+                 hButton.innerText = "Save Highlight (H)";
+                 hButton.style.backgroundColor = "#4CAF50";
+             }
+        }
     }
 });
 
+// Get formatted timestamp from video player
 function getVideoPlayerTimeStamp() {
-    const currentTime = videoPlayer.getCurrentTime();
-    const hours = Math.floor(currentTime / 3600);
-    const minutes = Math.floor((currentTime % 3600) / 60);
-    const secs = Math.floor(currentTime % 60);
-    return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    if (videoPlayer && typeof videoPlayer.getCurrentTime === 'function') {
+        try {
+            const currentTime = videoPlayer.getCurrentTime();
+            if (typeof currentTime === 'number' && !isNaN(currentTime)) {
+                const hours = Math.floor(currentTime / 3600);
+                const minutes = Math.floor((currentTime % 3600) / 60);
+                const secs = Math.floor(currentTime % 60);
+                // Format to HH:MM:SS
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            } else {
+                console.warn("getCurrentTime() did not return a valid number.");
+                return '00:00:00';
+            }
+        } catch (error) {
+             console.error("Error getting video player time:", error);
+             return '00:00:00';
+        }
+    } else {
+        // console.warn("Video player not ready or available.");
+        return '00:00:00'; // Return default if player not ready
+    }
 }
 
+// --- Statistics Calculation (Based on OLD Format) ---
+// !!! IMPORTANT: This section needs a complete rewrite to parse the NEW log format.
+// The current implementation only works with the old "Action - PlayerInfo - Timestamp" format.
+
 function calculateStats() {
-    const stats = {};
-    if (gameLogTextBox.value !== '') {
-         actionLog = gameLogTextBox.value.split('\n').filter(line => line.trim() !== '');
+    console.warn("--- Calculating Stats based on OLD Log Format ---");
+    alert("Warning: Statistics calculation is based on the old log format and may be inaccurate or incomplete. The parser needs to be updated for the new log structure.");
+
+    const stats = {}; // Player stats accumulator
+
+    // 1. Parse Game Log (OLD FORMAT)
+    if (gameLogTextBox.value.trim() !== '') {
+        // Split into lines and filter out empty ones
+        actionLog = gameLogTextBox.value.split('\n').filter(line => line.trim() !== '');
+    } else {
+        actionLog = []; // Ensure it's an empty array if log is empty
     }
 
-    if (gameHighlightsTextBox.value !== '') {
-        highlightsLog = gameHighlightsTextBox.value
-                                .split('\n') // Split the input into an array of lines
-                                .filter(line => line.trim() !== '') // Remove empty or whitespace-only lines
-                                .filter(line => line.includes('Inpoint') || line.includes('Outpoint')); // Keep lines containing "Inpoint" and "Outpoint"
+    actionLog.forEach((entry, index) => {
+        // Try to parse OLD format: "Action - PlayerID : ManualID : JerseyID : Name : UniqueID - Timestamp"
+        const oldFormatMatch = entry.match(/^([^-]+)\s+-\s+([^:]+)\s+:\s+([^:]+)\s+:\s+([^:]+)\s+:\s+([^:]+)\s+:\s+([^ -]+)\s+-\s+(\d{2}:\d{2}:\d{2})$/);
 
-        allHighlightsLog = gameHighlightsTextBox.value
-        .split('\n') // Split the input into an array of lines
-        .filter(line => line.trim() !== '') // Remove empty or whitespace-only line
-   }
+        if (oldFormatMatch) {
+            // console.log(`Parsing OLD format entry ${index + 1}`);
+            const [ , action, playerId, manualId, jerseyId, playerName, uniqueId, timestamp] = oldFormatMatch;
 
-    // Iterate through all logged actions
-    actionLog.forEach(entry => {
-        console.log("HERE!!");
-        const [action, playerInfo, timestamp] = entry.split(' - ');
-        let [playerId, manualId, jerseyId, playerName, uniqueId] = playerInfo.split(' : ');
-        const playerKey = `${uniqueId}`;
-        player = playerDetailsMap.get(uniqueId)
-        const team = state.match[player.team] ? state.match[player.team] : player.team
-        const ageCategory = state.match.category
-        playerId = player.playerId
-        manualId = player.manualId
-        jerseyId = player.jerseyId
-        playerName = player.playerName
+            const playerKey = uniqueId.trim(); // Use uniqueId as the key
 
-        // Initialize player stats if not already present
-        if (!stats[playerKey]) {
-            stats[playerKey] = {
-                playerName,
-                playerId,
-                manualId,
-                jerseyId,
-                team,
-                ageCategory,
-                goals: 0,
-                assists: 0,
-                completePasses: 0,
-                incompletePasses: 0,
-                totalShots: 0,
-                shotsOnTarget: 0,
-                tackles: 0,
-                interceptions: 0,
-                saves: 0,
-                ownGoals: 0
-            };
-        }
+            // Initialize stats object for the player if it doesn't exist
+            if (!stats[playerKey]) {
+                 const playerDetails = playerDetailsMap.get(playerKey); // Get full details
+                 if (!playerDetails) {
+                      console.warn(`Skipping stats for entry ${index+1}: Player details not found for uniqueId ${playerKey}`);
+                      return; // Skip if we don't have details for this player
+                 }
+                 stats[playerKey] = {
+                    playerName: playerDetails.playerName,
+                    playerId: playerDetails.playerId,
+                    manualId: playerDetails.manualId,
+                    jerseyId: playerDetails.jerseyId,
+                    team: playerDetails.team === 'teamA' ? state.match.teamA : state.match.teamB, // Use current team name
+                    ageCategory: state.match.category,
+                    // Initialize all countable stats to 0
+                    goals: 0, assists: 0, completePasses: 0, incompletePasses: 0,
+                    totalShots: 0, shotsOnTarget: 0, tackles: 0, interceptions: 0,
+                    saves: 0, ownGoals: 0
+                };
+            }
 
-        // Update player stats based on the action
-        switch (action) {
-            case 'Goal':
-                stats[playerKey].goals++;
-                break;
-            case "OwnGoal":
-                stats[playerKey].ownGoals++;
-                break;
-            case 'Assist':
-                stats[playerKey].assists++;
-                break;
-            case 'CompletePass':
-                stats[playerKey].completePasses++;
-                break;
-            case 'IncompletePass':
-                stats[playerKey].incompletePasses++;
-                break;
-            case 'ShotOnTarget':
-                stats[playerKey].shotsOnTarget++;
-                stats[playerKey].totalShots++;
-                break;
-            case 'ShotOffTarget':
-                stats[playerKey].totalShots++;
-                break;
-            case 'Tackle':
-                stats[playerKey].tackles++;
-                break;
-            case 'Interception':
-                stats[playerKey].interceptions++;
-                break;
-            case 'Save':
-                stats[playerKey].saves++;
-                break;
+            // Increment stats based on the action (OLD ACTION NAMES)
+            switch (action.trim()) {
+                case 'Goal': stats[playerKey].goals++; break;
+                case 'OwnGoal': stats[playerKey].ownGoals++; break;
+                case 'Assist': stats[playerKey].assists++; break;
+                case 'CompletePass': stats[playerKey].completePasses++; break;
+                case 'IncompletePass': stats[playerKey].incompletePasses++; break;
+                case 'ShotOnTarget':
+                    stats[playerKey].shotsOnTarget++;
+                    stats[playerKey].totalShots++;
+                    break;
+                case 'ShotOffTarget':
+                    stats[playerKey].totalShots++;
+                    break;
+                case 'Tackle': stats[playerKey].tackles++; break;
+                case 'Interception': stats[playerKey].interceptions++; break;
+                case 'Save': stats[playerKey].saves++; break;
+                // Add more cases here if there were other old actions
+                default:
+                    // console.log(`Ignoring unknown action in old format log entry ${index + 1}: ${action.trim()}`);
+                    break;
+            }
+        } else {
+             console.warn(`Skipping log entry ${index + 1}: Does not match expected OLD format.`);
+             // Here, you would ideally add parsing logic for the NEW format
+             // e.g., const newFormatMatch = entry.match(/Set Piece: (.*?) \| ID: (.*?) \| ... /);
+             // and update stats accordingly based on `Action: ...` part.
         }
     });
 
-    // Calculate team stats
-    const matchStatsTable = generateMatchStatsTable(stats);
-    
-    // Generate the stats table
-    let statsTable = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Player</th>
-                    <th>Player Name</th>
-                    <th>Manual ID</th>
-                    <th>Jersey ID</th>
-                    <th>Team</th>
-                    <th>Age Category</th>
-                    <th>Goals</th>
-                    <th>Own Goals</th>
-                    <th>Assists</th>
-                    <th>Complete Passes</th>
-                    <th>Incomplete Passes</th>
-                    <th>Passing Accuracy</th>
-                    <th>Total Shots</th>
-                    <th>Shots on Target</th>
-                    <th>Tackles</th>
-                    <th>Interceptions</th>
-                    <th>Saves</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
 
-    // Populate the stats table
+    // 2. Parse Highlights Log (Separate from action stats)
+    if (gameHighlightsTextBox.value.trim() !== '') {
+        allHighlightsLog = gameHighlightsTextBox.value.split('\n').filter(line => line.trim() !== '');
+        // Extract just Inpoint/Outpoint for potential future use (not used in current stats table)
+        highlightsLog = allHighlightsLog.filter(line => line.startsWith('Inpoint:') || line.startsWith('Outpoint:'));
+    } else {
+        highlightsLog = [];
+        allHighlightsLog = [];
+    }
+
+
+    // 3. Generate Stats Tables (Based on OLD format parsed data)
+    const matchStatsTableHTML = generateMatchStatsTable(stats); // Calculate team stats
+    const playerStatsTableHTML = generatePlayerStatsTable(stats); // Create player table HTML
+
+    // 4. Display in Popup
+    displayStatsPopup(playerStatsTableHTML, matchStatsTableHTML);
+}
+
+// Generates HTML for the player statistics table
+function generatePlayerStatsTable(stats) {
+    let tableBodyHTML = '';
+
     Object.values(stats).forEach(player => {
-        const passingAccuracy = player.completePasses + player.incompletePasses > 0
-            ? `${((player.completePasses / (player.completePasses + player.incompletePasses)) * 100).toFixed(2)}%`
+        // Calculate passing accuracy safely
+        const totalPasses = player.completePasses + player.incompletePasses;
+        const passingAccuracy = totalPasses > 0
+            ? `${((player.completePasses / totalPasses) * 100).toFixed(1)}%` // Use 1 decimal place
             : 'N/A';
 
-        statsTable += `
+        tableBodyHTML += `
             <tr>
-                <td>${player.playerId}</td>
-                <td>${player.playerName}</td>
+                <td>${player.playerId || 'N/A'}</td>
+                <td>${player.playerName || 'N/A'}</td>
                 <td>${player.manualId || 'N/A'}</td>
                 <td>${player.jerseyId || 'N/A'}</td>
                 <td>${player.team || 'N/A'}</td>
@@ -672,285 +987,136 @@ function calculateStats() {
         `;
     });
 
-    statsTable += `
+    return `
+        <p style="color: red; font-weight: bold;">WARNING: Player Statistics below are based ONLY on the OLD log format parser and may be inaccurate or incomplete.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>PID</th>
+                    <th>Name</th>
+                    <th>Manual ID</th>
+                    <th>Jersey</th>
+                    <th>Team</th>
+                    <th>Category</th>
+                    <th>Goals</th>
+                    <th>Own Goals</th>
+                    <th>Assists</th>
+                    <th>Pass OK</th>
+                    <th>Pass NOK</th>
+                    <th>Pass Acc %</th>
+                    <th>Shots</th>
+                    <th>Shots OT</th>
+                    <th>Tackles</th>
+                    <th>Intercepts</th>
+                    <th>Saves</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableBodyHTML || '<tr><td colspan="17">No statistics calculated (check log format).</td></tr>'}
             </tbody>
         </table>
     `;
+}
 
-    // Display the stats table in a full-screen popup
-    const statsPopup = document.createElement('div');
-    statsPopup.classList.add('stats-popup', 'full-screen');
-    statsPopup.innerHTML = `
-        <div class="stats-popup-content">
-            <div class="stats-popup-header">
-                <h2>Player Statistics</h2>
-                <a href="#" class="download-button">Download as Excel</a>
-                <span class="close-button">&times;</span>
-            </div>
-            <div class="stats-container">
-                ${statsTable}
-            </div>
 
-            <div class="stats-container">
-                ${matchStatsTable}
-            </div>
-        </div>
-    `;
-    document.body.appendChild(statsPopup);
+// Calculates aggregated team stats from player stats
+function calculateMatchStats(playerStats) {
+     // !!! WARNING: Based on stats derived from the OLD log format parser.
+    console.warn("calculateMatchStats is based on stats derived from the OLD log format.");
 
-    // Add event listener to the download button
-    statsPopup.querySelector('.download-button').addEventListener('click', () => {
-        exportTablesToZip()
+    const teamAName = state.match.teamA || 'Team A';
+    const teamBName = state.match.teamB || 'Team B';
+
+    // Initialize stats objects for both teams, ensuring all keys exist
+    const initTeamStats = () => ({
+        goals: 0, ownGoals: 0, possession: 0, completePasses: 0, incompletePasses: 0,
+        passingAccuracySum: 0, playersWithPasses: 0, totalShots: 0, shotsOnTarget: 0,
+        tackles: 0, interceptions: 0, saves: 0, averagePassingAccuracy: 'N/A'
     });
 
-    // Close the popup when the close button is clicked
-    statsPopup.querySelector('.close-button').addEventListener('click', () => {
-        statsPopup.remove();
-    });
+    let teamStats = {
+        [teamAName]: initTeamStats(),
+        [teamBName]: initTeamStats()
+    };
 
-    // Close the popup when clicking outside the content
-    statsPopup.addEventListener('click', (e) => {
-        if (e.target === statsPopup) {
-            statsPopup.remove();
+    // Aggregate player stats into teams
+    for (const playerKey in playerStats) {
+        const player = playerStats[playerKey];
+        const teamName = player.team; // Should be the actual team name (Team A or Team B)
+
+        // Ensure the player's team exists in our stats object
+        if (!teamStats[teamName]) {
+            console.warn(`Player ${player.playerId} has unknown team ${teamName}, skipping for match stats.`);
+            continue; // Skip players with teams not matching current match setup
         }
-    });
-}
 
-function showGreenTick(logEntry) {
-    const tick = document.createElement('div');
-    tick.innerHTML = logEntry;
-    tick.className = 'green-tick';
-    document.body.appendChild(tick);
-    setTimeout(() => document.body.removeChild(tick), 500);
-}
+        // Aggregate countable stats
+        teamStats[teamName].goals += player.goals || 0;
+        teamStats[teamName].ownGoals += player.ownGoals || 0;
+        teamStats[teamName].completePasses += player.completePasses || 0;
+        teamStats[teamName].incompletePasses += player.incompletePasses || 0;
+        teamStats[teamName].totalShots += player.totalShots || 0;
+        teamStats[teamName].shotsOnTarget += player.shotsOnTarget || 0;
+        teamStats[teamName].tackles += player.tackles || 0;
+        teamStats[teamName].interceptions += player.interceptions || 0;
+        teamStats[teamName].saves += player.saves || 0;
 
-function downloadStatsAsExcel() {
-    // Convert the HTML table to a CSV string
-    const tableData = document.querySelector('.stats-container table').outerHTML;
-    const csvData = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(tableData);
-
-    // Create a download link and click it
-    const downloadLink = document.createElement('a');
-    downloadLink.setAttribute('href', csvData);
-    downloadLink.setAttribute('download', 'player-stats.xls');
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
-
-//Video Upload
-document.getElementById('updateVideoButton');
-updateYoutubeVideoButton.addEventListener('click', () => {
-    const youtubeVideoId = youtubeVideoIdInput.value.trim();
-    if (youtubeVideoId) {
-        videoPlayer.loadVideoById(youtubeVideoId);
-        // matchVideoPlayer.src = `https://www.youtube.com/embed/${youtubeVideoId}`;
-    } else {
-        alert('Please enter a valid YouTube video ID');
-    }
-});
-
-//Listen for Key Strokes
-document.addEventListener('keydown', (event) => {
-    const isInputActive = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
-
-    if (isInputActive) {
-        return; // Exit if the user is typing in a text box
-    }
-
-    if (statButtonShortcuts.hasOwnProperty(event.key.toUpperCase())) {
-        handleBasicStat(statButtonShortcuts[event.key.toUpperCase()])
-    } else if(event.key.toUpperCase() == 'H') {
-        startStopHighlights()
-    } else if (event.key === ' ' || event.code === 'Space') {
-        event.preventDefault(); // Prevent the page from scrolling down
-        const currentState = videoPlayer.getPlayerState();
-        if (currentState === 1) {
-            console.log("The video is currently playing.");
-            videoPlayer.pauseVideo()
-        } else if (currentState === 2) {
-            console.log("The video is currently paused.");
-            videoPlayer.playVideo();
-        }
-    } else if (event.key === 'ArrowRight') { // Check if the right arrow key is pressed
-        const currentTime = videoPlayer.getCurrentTime(); // Get the current playback time
-        const newTime = currentTime + 3; // Add 3 seconds to the current time
-        videoPlayer.seekTo(newTime, true); // Seek to the new time
-    } else if (event.key === 'ArrowLeft') { // Check if the right arrow key is pressed
-        const currentTime = videoPlayer.getCurrentTime(); // Get the current playback time
-        const newTime = currentTime - 3; // Add 3 seconds to the current time
-        videoPlayer.seekTo(newTime, true); // Seek to the new time
-    }
-});
-
-function onYouTubeIframeAPIReady() {
-    videoPlayer = new YT.Player('matchVideoPlayer', {
-        width: '100%',
-        height: '700',
-        videoId: '', // Start with an empty video
-        playerVars: {
-            autoplay: 1,
-            controls: 1,
-        },
-        events: {
-            onReady: onVideoPlayerReady
-        },
-    });
-}
-
-function onVideoPlayerReady(event) {
-
-}
-
-function calculateMatchStats(stats) {
-    // Initialize team stats
-    teamStats = {};
-    for (const playerKey in stats) {
-        const { team } = stats[playerKey];
-        if (!teamStats[team]) {
-            teamStats[team] = {
-                goals: 0,
-                ownGoals: 0,
-                possession: 0,
-                completePasses: 0,
-                incompletePasses: 0,
-                passingAccuracySum: 0,
-                playersWithPasses: 0, // Used for calculating average passing accuracy
-                totalShots: 0,
-                shotsOnTarget: 0,
-                tackles: 0,
-                interceptions: 0,
-                saves: 0
-            };
-        }
-    }
-
-    // Aggregate stats for each team
-    for (const playerKey in stats) {
-        const {
-            team,
-            goals,
-            ownGoals,
-            completePasses,
-            incompletePasses,
-            totalShots,
-            shotsOnTarget,
-            tackles,
-            interceptions,
-            saves
-        } = stats[playerKey];
-
-        // Add stats to the corresponding team
-        teamStats[team].goals += goals;
-        teamStats[team].ownGoals += ownGoals;
-        teamStats[team].completePasses += completePasses;
-        teamStats[team].incompletePasses += incompletePasses;
-        teamStats[team].totalShots += totalShots;
-        teamStats[team].shotsOnTarget += shotsOnTarget;
-        teamStats[team].tackles += tackles;
-        teamStats[team].interceptions += interceptions;
-        teamStats[team].saves += saves;
-
-        // Add passing accuracy for average calculation
-        const totalPasses = completePasses + incompletePasses;
+        // Sum accuracy for averaging later
+        const totalPasses = player.completePasses + player.incompletePasses;
         if (totalPasses > 0) {
-            const passingAccuracy = (completePasses / totalPasses) * 100;
-            teamStats[team].passingAccuracySum += passingAccuracy;
-            teamStats[team].playersWithPasses += 1;
+            const accuracy = (player.completePasses / totalPasses) * 100;
+            teamStats[teamName].passingAccuracySum += accuracy;
+            teamStats[teamName].playersWithPasses += 1;
         }
     }
 
-    if (teamStats[state.match.teamA] && teamStats[state.match.teamA].ownGoals > 0) {
-        if(!teamStats[state.match.teamB]) {
-            teamStats[state.match.teamB] = {
-                goals: 0
-            }
-        }
-        teamStats[state.match.teamB].goals +=  teamStats[state.match.teamA].ownGoals 
-    }
+    // Adjust goals for own goals (Team A own goal adds to Team B goals, etc.)
+    teamStats[teamBName].goals += teamStats[teamAName].ownGoals;
+    teamStats[teamAName].goals += teamStats[teamBName].ownGoals;
 
-    if (teamStats[state.match.teamB] && teamStats[state.match.teamB].ownGoals > 0) {
-        if(!teamStats[state.match.teamA]) {
-            teamStats[state.match.teamA] = {
-                goals: 0
-            }
-        }
-        teamStats[state.match.teamA].goals +=  teamStats[state.match.teamB].ownGoals 
-    }
+    // Calculate total passes across both teams for possession
+    const totalCompletePasses = teamStats[teamAName].completePasses + teamStats[teamBName].completePasses;
+    const totalIncompletePasses = teamStats[teamAName].incompletePasses + teamStats[teamBName].incompletePasses;
+    const overallTotalPasses = totalCompletePasses + totalIncompletePasses;
 
+    // Calculate final possession and average accuracy for each team
+    for (const teamName of [teamAName, teamBName]) {
+        // Possession
+        const teamTotalPasses = teamStats[teamName].completePasses + teamStats[teamName].incompletePasses;
+        teamStats[teamName].possession = overallTotalPasses > 0
+            ? ((teamTotalPasses / overallTotalPasses) * 100).toFixed(1) // 1 decimal place
+            : '0.0';
 
-    // Calculate possession and average passing accuracy
-    const totalCompletePasses = Object.values(teamStats).reduce((sum, team) => sum + team.completePasses, 0);
-    const totalIncompletePasses = Object.values(teamStats).reduce((sum, team) => sum + team.incompletePasses, 0);
-    const totalPasses = totalCompletePasses + totalIncompletePasses;
-
-    for (const team in teamStats) {
-        if (totalPasses > 0) {
-            teamStats[team].possession = (
-                ((teamStats[team].completePasses + teamStats[team].incompletePasses) / totalPasses) *
-                100
-            ).toFixed(2);
+        // Average Passing Accuracy
+        if (teamStats[teamName].playersWithPasses > 0) {
+            teamStats[teamName].averagePassingAccuracy =
+                `${(teamStats[teamName].passingAccuracySum / teamStats[teamName].playersWithPasses).toFixed(1)}%`; // 1 decimal place
         } else {
-            teamStats[team].possession = 'N/A';
-        }        
-        if (teamStats[team].playersWithPasses > 0) {
-            teamStats[team].averagePassingAccuracy = `${(
-                teamStats[team].passingAccuracySum / teamStats[team].playersWithPasses
-            ).toFixed(2)}%`;
-        } else {
-            teamStats[team].averagePassingAccuracy = 'N/A';
+            teamStats[teamName].averagePassingAccuracy = 'N/A';
         }
 
-        // Remove temporary keys used for calculations
-        delete teamStats[team].passingAccuracySum;
-        delete teamStats[team].playersWithPasses;
+        // Clean up temporary calculation fields
+        delete teamStats[teamName].passingAccuracySum;
+        delete teamStats[teamName].playersWithPasses;
     }
 
-    return teamStats;
+    return teamStats; // Return stats for both teams
 }
 
+// Generates HTML for the match statistics table
 function generateMatchStatsTable(playerStats) {
-    matchStats = calculateMatchStats(playerStats)
-    console.log(matchStats)
-    const teamA = Object.keys(matchStats)[0] ? Object.keys(matchStats)[0] : "Team A"
-    const teamB = Object.keys(matchStats)[1] ? Object.keys(matchStats)[1] : "Team B"
+    // !!! WARNING: Based on stats derived from the OLD log format parser.
+    const teamStats = calculateMatchStats(playerStats); // Get calculated team stats
+    const teamA = state.match.teamA || "Team A";
+    const teamB = state.match.teamB || "Team B";
 
-    if (!matchStats[teamA]) {
-        matchStats[teamA] = {
-            goals: 0,
-            possession: 0,
-            completePasses: 0,
-            incompletePasses: 0,
-            passingAccuracySum: 0,
-            playersWithPasses: 0, // Used for calculating average passing accuracy
-            totalShots: 0,
-            shotsOnTarget: 0,
-            tackles: 0,
-            interceptions: 0,
-            saves: 0,
-            averagePassingAccuracy: 'N/A'
-        }
-    }
-
-    if (!matchStats[teamB]) {
-        matchStats[teamB] = {
-            goals: 0,
-            possession: 0,
-            completePasses: 0,
-            incompletePasses: 0,
-            passingAccuracySum: 0,
-            playersWithPasses: 0, // Used for calculating average passing accuracy
-            totalShots: 0,
-            shotsOnTarget: 0,
-            tackles: 0,
-            interceptions: 0,
-            saves: 0,
-            averagePassingAccuracy: 'N/A'
-        }
-    }
+    // Get stats, providing defaults if a team had no actions logged
+    const teamAStats = teamStats[teamA] || { goals: 0, possession: '0.0', averagePassingAccuracy: 'N/A', totalShots: 0, shotsOnTarget: 0, tackles: 0, interceptions: 0, saves: 0 };
+    const teamBStats = teamStats[teamB] || { goals: 0, possession: '0.0', averagePassingAccuracy: 'N/A', totalShots: 0, shotsOnTarget: 0, tackles: 0, interceptions: 0, saves: 0 };
 
 
     return `
+        <p style="color: red; font-weight: bold;">WARNING: Match Statistics below are based ONLY on the OLD log format parser and may be inaccurate or incomplete.</p>
         <table>
             <thead>
                 <tr>
@@ -960,107 +1126,361 @@ function generateMatchStatsTable(playerStats) {
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Goals</td>
-                    <td>${matchStats[teamA].goals}</td>
-                    <td>${matchStats[teamB].goals}</td>
-                </tr>
-                <tr>
-                    <td>Possession</td>
-                    <td>${matchStats[teamA].possession}%</td>
-                    <td>${matchStats[teamB].possession}%</td>
-                </tr>
-                <tr>
-                    <td>Cumulative Passing Accuracy</td>
-                    <td>${matchStats[teamA].averagePassingAccuracy}</td>
-                    <td>${matchStats[teamB].averagePassingAccuracy}</td>
-                </tr>
-                <tr>
-                    <td>Total Shots</td>
-                    <td>${matchStats[teamA].totalShots}</td>
-                    <td>${matchStats[teamB].totalShots}</td>
-                </tr>
-                <tr>
-                    <td>Total Shots on Target</td>
-                    <td>${matchStats[teamA].shotsOnTarget}</td>
-                    <td>${matchStats[teamB].shotsOnTarget}</td>
-                </tr>
-                <tr>
-                    <td>Total Tackles</td>
-                    <td>${matchStats[teamA].tackles}</td>
-                    <td>${matchStats[teamB].tackles}</td>
-                </tr>
-                <tr>
-                    <td>Total Interceptions</td>
-                    <td>${matchStats[teamA].interceptions}</td>
-                    <td>${matchStats[teamB].interceptions}</td>
-                </tr>
-                <tr>
-                    <td>Saves</td>
-                    <td>${matchStats[teamA].saves}</td>
-                    <td>${matchStats[teamB].saves}</td>
-                </tr>
+                <tr><td>Goals</td> <td>${teamAStats.goals}</td> <td>${teamBStats.goals}</td> </tr>
+                <tr><td>Possession %</td> <td>${teamAStats.possession}%</td> <td>${teamBStats.possession}%</td> </tr>
+                <tr><td>Avg. Pass Acc %</td> <td>${teamAStats.averagePassingAccuracy}</td> <td>${teamBStats.averagePassingAccuracy}</td> </tr>
+                <tr><td>Total Shots</td> <td>${teamAStats.totalShots}</td> <td>${teamBStats.totalShots}</td> </tr>
+                <tr><td>Shots on Target</td> <td>${teamAStats.shotsOnTarget}</td> <td>${teamBStats.shotsOnTarget}</td> </tr>
+                <tr><td>Tackles</td> <td>${teamAStats.tackles}</td> <td>${teamBStats.tackles}</td> </tr>
+                <tr><td>Interceptions</td> <td>${teamAStats.interceptions}</td> <td>${teamBStats.interceptions}</td> </tr>
+                <tr><td>Saves</td> <td>${teamAStats.saves}</td> <td>${teamBStats.saves}</td> </tr>
+                <!-- Add Own Goals display if desired -->
+                <tr><td>Own Goals Against</td> <td>${teamBStats.ownGoals || 0}</td> <td>${teamAStats.ownGoals || 0}</td> </tr>
             </tbody>
         </table>
     `;
 }
 
+
+// Displays the statistics popup with generated table HTML
+function displayStatsPopup(playerStatsTableHTML, matchStatsTableHTML) {
+    // Create the popup container if it doesn't exist, otherwise clear it
+    let statsPopup = document.getElementById('statsPopupContainer');
+    if (!statsPopup) {
+        statsPopup = document.createElement('div');
+        statsPopup.id = 'statsPopupContainer';
+        statsPopup.classList.add('stats-popup', 'full-screen'); // Use existing classes
+        document.body.appendChild(statsPopup);
+    }
+
+    // Set the inner HTML
+    statsPopup.innerHTML = `
+        <div class="stats-popup-content">
+            <div class="stats-popup-header">
+                <h2>Statistics (Old Format Parser)</h2>
+                <a href="#" class="download-button" id="downloadStatsZipBtn">Download Zip</a>
+                <span class="close-button" id="closeStatsPopupBtn">×</span>
+            </div>
+            <div class="stats-container" id="playerStatsContainer">
+                ${playerStatsTableHTML}
+            </div>
+            <hr>
+            <div class="stats-container" id="matchStatsContainer">
+                ${matchStatsTableHTML}
+            </div>
+        </div>
+    `;
+
+    // Add event listeners for close and download buttons
+    document.getElementById('closeStatsPopupBtn').addEventListener('click', () => {
+        statsPopup.remove(); // Remove the popup from the DOM
+    });
+    document.getElementById('downloadStatsZipBtn').addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent default link behavior
+        exportTablesToZip();
+    });
+
+     // Optional: Close popup when clicking outside the content area
+    statsPopup.addEventListener('click', (e) => {
+        if (e.target === statsPopup) { // Clicked on the background overlay
+            statsPopup.remove();
+        }
+    });
+
+    // Make the popup visible
+    statsPopup.style.display = 'flex';
+}
+
+
+// Show a temporary confirmation message (green tick style)
+function showGreenTick(message) {
+    const tick = document.createElement('div');
+    // Show only first part of log entry for brevity, or the provided message
+    const shortLog = message.length > 100 ? message.split('|').slice(0, 3).join('|') + '...' : message;
+    tick.innerHTML = shortLog + " Logged!";
+    tick.className = 'green-tick'; // Apply CSS class for styling
+
+    document.body.appendChild(tick);
+
+    // Remove the tick after a short delay (e.g., 1.5 seconds)
+    setTimeout(() => {
+      if (document.body.contains(tick)) { // Check if it hasn't been removed already
+         document.body.removeChild(tick);
+      }
+    }, 1500); // 1.5 seconds duration
+}
+
+
+// --- YouTube Player Integration ---
+
+// Update the YouTube video player source
+function updateYouTubeVideo() {
+    const youtubeVideoId = youtubeVideoIdInput.value.trim();
+    if (youtubeVideoId && videoPlayer && typeof videoPlayer.loadVideoById === 'function') {
+        console.log(`Loading YouTube video: ${youtubeVideoId}`);
+        videoPlayer.loadVideoById(youtubeVideoId);
+        // Optionally clear logs or reset state when a new video is loaded
+        // gameLogTextBox.value = "";
+        // actionLog = [];
+        // resetActionSelections();
+    } else if (!youtubeVideoId) {
+         alert('Please enter a YouTube Video ID.');
+    } else {
+        alert('YouTube player is not ready yet. Please wait a moment.');
+        console.error('Attempted to load video, but player object is not ready or loadVideoById is unavailable.');
+    }
+}
+
+// Keyboard shortcuts listener
+document.addEventListener('keydown', (event) => {
+    // Ignore keypresses if user is typing in an input or textarea
+    const isInputActive = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
+    if (isInputActive) {
+        return;
+    }
+
+    // --- Add New Keyboard Shortcuts Here (Optional) ---
+    // Example: if (event.key === 'p') { handlePrimaryActionSelect('passBtn'); }
+    //          if (event.key === 'l') { logNewAction(); }
+
+    // --- Existing Shortcuts ---
+    if (event.key.toUpperCase() === 'H') { // Toggle Highlight Start/Stop
+        event.preventDefault(); // Prevent browser's history action
+        startStopHighlights();
+    } else if (event.code === 'Space' || event.key === ' ') { // Play/Pause Video
+        event.preventDefault(); // Prevent page scrolling
+        toggleVideoPlayback();
+    } else if (event.key === 'ArrowRight') { // Seek Forward
+        event.preventDefault();
+        seekVideo(3); // Seek forward 3 seconds
+    } else if (event.key === 'ArrowLeft') { // Seek Backward
+        event.preventDefault();
+        seekVideo(-3); // Seek backward 3 seconds
+    }
+});
+
+// Toggle video playback state (Play/Pause)
+function toggleVideoPlayback() {
+    if (videoPlayer && typeof videoPlayer.getPlayerState === 'function') {
+        const currentState = videoPlayer.getPlayerState();
+        if (currentState === YT.PlayerState.PLAYING) {
+            videoPlayer.pauseVideo();
+            console.log("Video Paused");
+        } else if (currentState === YT.PlayerState.PAUSED || currentState === YT.PlayerState.ENDED || currentState === YT.PlayerState.CUED) {
+            videoPlayer.playVideo();
+            console.log("Video Playing");
+        }
+        // Ignore buffering, unstarted states
+    } else {
+        console.warn("Cannot toggle playback: Video player not ready.");
+    }
+}
+
+// Seek video by a relative amount of seconds
+function seekVideo(seconds) {
+     if (videoPlayer && typeof videoPlayer.getCurrentTime === 'function' && typeof videoPlayer.seekTo === 'function') {
+        const currentTime = videoPlayer.getCurrentTime();
+        const newTime = Math.max(0, currentTime + seconds); // Ensure time doesn't go below 0
+        videoPlayer.seekTo(newTime, true); // Seek to new time, allow seeking ahead
+        console.log(`Video seeked by ${seconds}s to ${getVideoPlayerTimeStamp()}`);
+    } else {
+        console.warn("Cannot seek: Video player not ready.");
+    }
+}
+
+
+// This function is called automatically when the YouTube IFrame Player API code downloads.
+function onYouTubeIframeAPIReady() {
+    console.log("YouTube IFrame API Ready. Initializing player...");
+    try {
+        videoPlayer = new YT.Player('matchVideoPlayer', {
+            width: '100%',  // Take full width of its container
+            height: '100%', // Take full height of its container
+            videoId: '',    // Start with no video loaded
+            playerVars: {
+                'autoplay': 0, // Don't autoplay initially
+                'controls': 1, // Show default YouTube controls
+                'rel': 0, // Don't show related videos at the end
+                'showinfo': 0, // Hide video title/uploader (deprecated but good practice)
+                'modestbranding': 1 // Reduce YouTube logo visibility
+            },
+            events: {
+                'onReady': onVideoPlayerReady,
+                'onStateChange': onVideoPlayerStateChange, // Add state change listener
+                'onError': onVideoPlayerError // Add error listener
+            }
+        });
+    } catch (error) {
+        console.error("Error initializing YouTube player:", error);
+        alert("Failed to initialize YouTube player. Check console for errors.");
+    }
+}
+
+// Called when the player is ready to start receiving API calls.
+function onVideoPlayerReady(event) {
+    console.log("YouTube Player Instance Ready (onReady event).");
+    // You could load a default video ID here if desired:
+    // const defaultVideoId = "your_default_video_id_here";
+    // updateYoutubeVideoButton.value = defaultVideoId; // Set input value too
+    // event.target.loadVideoById(defaultVideoId);
+}
+
+// Called when the player's state changes (playing, paused, buffering, etc.)
+function onVideoPlayerStateChange(event) {
+    let stateName = "Unknown";
+    switch (event.data) {
+        case YT.PlayerState.UNSTARTED: stateName = 'Unstarted'; break;
+        case YT.PlayerState.ENDED: stateName = 'Ended'; break;
+        case YT.PlayerState.PLAYING: stateName = 'Playing'; break;
+        case YT.PlayerState.PAUSED: stateName = 'Paused'; break;
+        case YT.PlayerState.BUFFERING: stateName = 'Buffering'; break;
+        case YT.PlayerState.CUED: stateName = 'Cued'; break;
+    }
+     console.log(`Player state changed: ${stateName} (${event.data})`);
+}
+
+// Called if an error occurs in the player.
+function onVideoPlayerError(event) {
+    console.error("YouTube Player Error:", event.data);
+    let errorMessage = `An error occurred with the YouTube player (Code: ${event.data}).`;
+    // Provide more specific messages for common errors
+    switch (event.data) {
+        case 2: errorMessage += " The video ID might be invalid."; break;
+        case 5: errorMessage += " Error related to HTML5 playback."; break;
+        case 100: errorMessage += " Video not found or removed."; break;
+        case 101:
+        case 150: errorMessage += " Playback disallowed by video owner."; break;
+    }
+    alert(errorMessage + " Please check the video ID and try again.");
+}
+
+
+// --- Data Export ---
+
+// Export stats tables and logs to a ZIP file
 function exportTablesToZip() {
-    // Parse the player stats table
-    const playerStatsTable = document.querySelector('.stats-container table');
-    const playerStatsArray = parseHTMLTableToArray(playerStatsTable.outerHTML);
+    console.log("Initiating ZIP export...");
 
-    // Parse the match stats table
-    const matchStatsTable = document.querySelectorAll('.stats-container table')[1];
-    const matchStatsArray = parseHTMLTableToArray(matchStatsTable.outerHTML);
+    // Get the HTML content of the stats tables from the popup
+    const playerStatsContainer = document.getElementById('playerStatsContainer');
+    const matchStatsContainer = document.getElementById('matchStatsContainer');
 
-    // Create a new workbook for Excel
-    const wb = XLSX.utils.book_new();
+    if (!playerStatsContainer || !matchStatsContainer) {
+        console.error("Stats containers not found in the popup.");
+        alert("Error: Could not find statistics tables to export.");
+        return;
+    }
 
-    // Convert arrays to worksheets
-    const playerStatsSheet = XLSX.utils.aoa_to_sheet(playerStatsArray);
-    const matchStatsSheet = XLSX.utils.aoa_to_sheet(matchStatsArray);
+    const playerTableHTML = playerStatsContainer.querySelector('table')?.outerHTML;
+    const matchTableHTML = matchStatsContainer.querySelector('table')?.outerHTML;
 
-    // Append sheets to the workbook
-    XLSX.utils.book_append_sheet(wb, playerStatsSheet, "Player Stats");
-    XLSX.utils.book_append_sheet(wb, matchStatsSheet, "Match Stats");
+    if (!playerTableHTML || !matchTableHTML) {
+        console.error("Stats tables not found within containers.");
+        alert("Error: Could not find statistics tables content.");
+        return;
+    }
 
-    // Generate the Excel file as a binary string
-    const excelData = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    // 1. Create Excel Data
+    let wb; // Workbook
+    try {
+        const playerStatsArray = parseHTMLTableToArray(playerTableHTML);
+        const matchStatsArray = parseHTMLTableToArray(matchTableHTML);
 
-    const highlightsLogString = highlightsLog.join("\n");
-    const allHighlightsLogString = allHighlightsLog.join("\n")
-    const actionLogString = actionLog.join("\n") + " \n \n Highlights: \n" + allHighlightsLogString
+        wb = XLSX.utils.book_new();
+        const playerStatsSheet = XLSX.utils.aoa_to_sheet(playerStatsArray);
+        const matchStatsSheet = XLSX.utils.aoa_to_sheet(matchStatsArray);
 
-    // Create a new ZIP file
+        // Add sheets to the workbook with descriptive names
+        XLSX.utils.book_append_sheet(wb, playerStatsSheet, "Player Stats (Old Format)");
+        XLSX.utils.book_append_sheet(wb, matchStatsSheet, "Match Stats (Old Format)");
+
+    } catch (error) {
+         console.error("Error creating Excel data:", error);
+         alert("Error preparing Excel file. Check console for details.");
+         return;
+    }
+
+
+    // 2. Prepare Log Data
+    // Use the current content of the text areas
+    const gameLogContent = gameLogTextBox.value;
+    const highlightsContent = gameHighlightsTextBox.value;
+    const combinedLogContent = `Game Log:\n${gameLogContent}\n\n--------\n\nGame Highlights:\n${highlightsContent}`;
+
+    // 3. Create ZIP File
     const zip = new JSZip();
 
-    const name = `${state.match.teamA} - ${state.match.teamB} - ${state.match.id}`
-    // Add the Excel file to the ZIP
-    zip.file(`${name}.xlsx`, excelData);
+    // Sanitize file names (replace non-alphanumeric chars with underscore)
+    const safeTeamA = (state.match.teamA || 'TeamA').replace(/[^a-z0-9]/gi, '_');
+    const safeTeamB = (state.match.teamB || 'TeamB').replace(/[^a-z0-9]/gi, '_');
+    const safeMatchId = (state.match.id || 'Match').replace(/[^a-z0-9]/gi, '_');
+    const baseFileName = `${safeMatchId}_${safeTeamA}_vs_${safeTeamB}`;
 
-    // Add the text file to the ZIP
-    zip.file("logs.txt", actionLogString);
-    zip.file("highlights.txt", highlightsLogString);
+    // Add Excel file to ZIP
+    try {
+        const excelData = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        zip.file(`${baseFileName}_Stats.xlsx`, excelData);
+    } catch (error) {
+        console.error("Error writing Excel file to ZIP:", error);
+        alert("Error adding Excel file to ZIP. Check console.");
+        // Continue to try zipping logs even if Excel fails
+    }
 
-    // Generate the ZIP file and trigger the download
-    zip.generateAsync({ type: "blob" }).then(function (content) {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = `${name}.zip`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        console.log("ZIP file has been downloaded.");
+    // Add log files to ZIP
+    zip.file(`${baseFileName}_GameLog.txt`, gameLogContent);
+    zip.file(`${baseFileName}_Highlights.txt`, highlightsContent);
+    zip.file(`${baseFileName}_CombinedLogs.txt`, combinedLogContent); // Optional combined log
+
+    // 4. Generate and Download ZIP
+    zip.generateAsync({ type: "blob" })
+        .then(function (content) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(content);
+            a.download = `${baseFileName}_Export.zip`;
+            document.body.appendChild(a); // Append link to body for Firefox compatibility
+            a.click();
+            document.body.removeChild(a); // Clean up link
+            URL.revokeObjectURL(a.href); // Release object URL
+            console.log("ZIP file generated and download initiated.");
+        })
+        .catch(function (err) {
+            console.error("Error generating ZIP file:", err);
+            alert("Error generating ZIP file. See console for details.");
+        });
+}
+
+
+// Helper function to parse an HTML table string into a 2D array for Excel export
+function parseHTMLTableToArray(htmlTableString) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlTableString, 'text/html');
+    const tableElement = doc.querySelector('table');
+    if (!tableElement) return []; // Return empty if no table found
+
+    const data = [];
+    // Parse header (thead)
+    const headers = Array.from(tableElement.querySelectorAll('thead th'))
+                         .map(th => th.textContent?.trim() || '');
+    if (headers.length > 0) data.push(headers);
+
+    // Parse body (tbody)
+    const rows = Array.from(tableElement.querySelectorAll('tbody tr'));
+    rows.forEach(row => {
+        const rowData = Array.from(row.querySelectorAll('td'))
+                             .map(td => td.textContent?.trim() || '');
+        if (rowData.length > 0) data.push(rowData); // Only add non-empty rows
     });
+
+    return data;
 }
 
-
-
-
-// Helper to parse HTML tables into arrays
-function parseHTMLTableToArray(htmlTable) {
-    const table = document.createElement('div');
-    table.innerHTML = htmlTable.trim();
-    const rows = Array.from(table.querySelectorAll('tr'));
-    return rows.map(row => Array.from(row.querySelectorAll('td, th')).map(cell => cell.textContent));
-}
+// --- Initialization ---
+// Update team names on initial load based on default state
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('team-a-name').innerText = state.match.teamA;
+    document.getElementById('team-b-name').innerText = state.match.teamB;
+    console.log("DOM Loaded. Initial state:", state);
+     // If you want to start with some players by default, call addPlayer here:
+     // addPlayer('teamA');
+     // addPlayer('teamB');
+});

@@ -3,139 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Tagging Tool</title>
+    <title>Football Tagging Tool - Wide Layout</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="football-tagging-tool">
-        <div class="football-tagging-tool">
-            <div class="main-container">
-                <div class="top-container">
-                    <section class="area video-player">
-                        <div id="matchVideoPlayer" width="100%" height="700"></div>
-                        <button class="saveToHighlightsButton" id="saveToHighlightsButton">Save to Highlights (H)</button>
-                        <!-- <iframe id="matchVideoPlayer" src="" width="100%" height="700" allow="autoplay"></iframe> -->
-                    </section>
-                    <div class="sidebar-container">
-                        <div class="layout-controls">
-                            <label>
-                                <input type="radio" name="layout" value="pid" checked> PID Layout
-                            </label>
-                            <label>
-                                <input type="radio" name="layout" value="manual"> Manual Layout
-                            </label>
-                            <label>
-                                <input type="radio" name="layout" value="jersey"> Jersey Layout
-                            </label>
-                        </div>
-                        <section class="area basic-stats">
-                            <h2>Basic Stats</h2>
-                            <button id="completePass">Complete Pass (A)</button>
-                            <button id="incompletePass">Incomplete Pass (D)</button>
-                            <button id="goalBtn">Goal (S)</button>
-                            <button id="ownGoalBtn">Own Goal (O)</button>
-                            <button id="assistBtn">Assist (Q)</button>
-                            <button id="shotOnTargetBtn">Shot On Target (W)</button>
-                            <button id="shotOffTargetBtn">Shot Off Target (E)</button>
-                            <button id="tackleBtn">Tackle (Z)</button>
-                            <button id="interceptionBtn">Interception (X)</button>
-                            <button id="saveBtn">Save (C)</button>
-                        </section>
+        <div class="main-container">
+
+            <!-- Video Player (Full Width Top) -->
+            <section class="area video-player-full-width no-padding"> <!-- Added no-padding -->
+                <div id="matchVideoPlayer"></div>
+                <button class="saveToHighlightsButton" id="saveToHighlightsButton">Save Highlight (H)</button>
+            </section>
+
+            <!-- Container for Player & Action Panels Below Video -->
+            <div class="panels-below-video area no-padding"> <!-- Combined Panel Area -->
+
+                <!-- Player Selection Panel (Left) -->
+                <section class="panel player-panel area">
+                    <h3>Players</h3>
+                    <div class="layout-controls-inline"> <!-- Layout controls within player panel -->
+                        <label><input type="radio" name="layout" value="pid" checked> PID</label>
+                        <label><input type="radio" name="layout" value="manual"> Manual</label>
+                        <label><input type="radio" name="layout" value="jersey"> Jersey</label>
                     </div>
-                </div>
-                <section class="area create-players">
-                    <div class="team-section-container">
+                    <div class="team-section-container horizontal-teams">
                         <div class="team-section team-a">
                             <div class="team-header">
-                                <h3 id="team-a-name"> Team A</h3>
+                                <h4 id="team-a-name"> Team A</h4>
                                 <div class="player-controls">
                                     <button id="addTeamAPlayer" class="add-player">+</button>
                                     <span id="teamAPlayerCount">0</span>
                                     <button id="removeTeamAPlayer" class="remove-player">-</button>
                                 </div>
                             </div>
-                            <div id="teamAPlayerButtons" class="player-buttons-container"></div>
+                            <!-- IMPORTANT: Container MUST expand, NO scroll -->
+                            <div id="teamAPlayerButtons" class="player-buttons-container no-scroll"></div>
                         </div>
                         <div class="team-section team-b">
                             <div class="team-header">
-                                <h3 id="team-b-name"> Team B</h3>                                
+                                <h4 id="team-b-name"> Team B</h4>
                                 <div class="player-controls">
                                     <button id="addTeamBPlayer" class="add-player">+</button>
                                     <span id="teamBPlayerCount">0</span>
                                     <button id="removeTeamBPlayer" class="remove-player">-</button>
                                 </div>
                             </div>
-                            <div id="teamBPlayerButtons" class="player-buttons-container"></div>
+                             <!-- IMPORTANT: Container MUST expand, NO scroll -->
+                            <div id="teamBPlayerButtons" class="player-buttons-container no-scroll"></div>
                         </div>
                     </div>
                 </section>
-                <section class="area meta-data">
-                    <div class="input-layout-container">
-                        <div class="input-container">    
-                            <div class="video-control">
-                                <label for="youtubeVideoIdInput">YouTube Video ID:</label>
-                                <input type="text" id="youtubeVideoIdInput" placeholder="Enter YouTube Video ID">
-                                <button id="updateYoutubeVideoButton">Update YouTube Video</button>
-                            </div>
+
+                <!-- Action Button Panel (Right) -->
+                <section class="panel action-panel area">
+                    <h3>Actions</h3>
+                     <!-- IMPORTANT: Container MUST expand, NO scroll -->
+                    <div class="actions-wrapper no-scroll">
+                        <div class="action-section attack-actions">
+                            <h5>Attack</h5>
+                            <button id="passBtn">Pass</button>
+                            <button id="longPassBtn">Long Pass</button>
+                            <button id="throughBallBtn">Through Ball</button>
+                            <button id="shotBallBtn">Shot</button>
+                            <button id="crossBtn">Cross</button>
+                            <button id="dribbleAttemptBtn">Dribble Attempt</button>
+                            <button id="miscontrolBtn">Miscontrol</button>
+                            <button id="goalBtn">Goal</button>
+                            <button id="noActionBtn">No Action</button>
+                        </div>
+                        <div class="action-section defense-actions">
+                            <h5>Defense</h5>
+                            <button id="defensiveActionBtn">Defensive Action</button>
+                            <button id="clearanceBtn">Clearance</button>
+                        </div>
+                        <div class="action-section gk-actions">
+                            <h5>GK</h5>
+                            <button id="saveBtn">Save</button>
+                            <button id="catchBtn">Catch</button>
+                            <button id="punchBtn">Punch</button>
+                        </div>
+                        <div class="action-section setpiece-actions">
+                            <h5>Set Piece</h5>
+                            <button id="cornerBtn">Corner</button>
+                            <button id="freeKickBtn">Free kick</button>
+                            <button id="penaltyBtn">Penalty</button>
+                            <button id="outOfBoundsBtn">Out of Bounds</button>
+                        </div>
+                        <div class="action-section special-actions">
+                            <h5>Special</h5>
+                            <button id="headerBtn">Header</button>
+                            <button id="woodworkBtn">Woodwork</button>
+                            <button id="moiBtn">MOI</button>
+                            <button id="aerialDuelBtn">Aerial Duel</button>
                         </div>
                     </div>
+                     <!-- Log button outside the scroll wrapper if wrapper scrolled -->
+                     <button id="logActionButton" class="log-action-button">Log Action</button>
+                </section>
 
-                    <div class="input-layout-container">
+            </div> <!-- End Panels Below Video -->
+
+            <!-- Meta Data -->
+            <section class="area meta-data">
+                <h3>Match & Video Setup</h3>
+                <div class="input-layout-container">
+                    <div class="input-container video-control">
+                        <label for="youtubeVideoIdInput">YouTube Video ID:</label>
+                        <input type="text" id="youtubeVideoIdInput" placeholder="Enter YouTube Video ID">
+                        <button id="updateYoutubeVideoButton">Update Video</button>
+                    </div>
+                    <div class="input-container match-control">
                         <button id="setMatchDetails">Set Match Details</button>
                     </div>
-                </section>
-                <div class="text-box-container">
-                    <div class="text-box">
-                        <h3>Game Log</h3>
-                        <textarea id="gameLogTextBox" readonly></textarea>
-                    </div>
-                    <div class="text-box">
-                        <h3>Game Highlights</h3>
-                        <textarea id="gameHighlightsTextBox" readonly></textarea>
-                    </div>
+                </div>
+            </section>
+
+            <!-- Logs -->
+            <div class="text-box-container">
+                <div class="text-box area">
+                    <h3>Game Log</h3>
+                    <textarea id="gameLogTextBox"></textarea>
+                </div>
+                <div class="text-box area">
+                    <h3>Game Highlights</h3>
+                    <textarea id="gameHighlightsTextBox"></textarea>
                 </div>
             </div>
-            
 
-        </div>
-        
-    </div>
+            <!-- Main Controls -->
+            <div class="button-container main-controls area">
+                <h3>Controls</h3>
+                <button id="undoButton">Undo Last Log</button>
+                <button id="calculateStats">Calculate Stats (Old Format)</button>
+            </div>
 
-    <div class="button-container">
-        <button id="undoButton">Undo</button>
-        <button id="calculateStats">Calculate Stats</button>
-    </div>
+        </div> <!-- End Main Container -->
+    </div> <!-- End Tool Container -->
 
+    <!-- Popups -->
     <div id="popup" class="popup">
-        <div class="popup-content">
-            <span id="closePopup" class="close">&times;</span>
-            <div id="popupContent"></div>
+        <div class="popup-content"> <!-- General popup content area -->
+            <span class="close">×</span>
+            <div id="popupContent"></div> <!-- Specific content injected here -->
         </div>
     </div>
 
     <div id="playerEditPopup" class="popup">
-        <div class="popup-content">
-            <span class="close">&times;</span>
-            <h2>Edit Player Details</h2>
-            <div class="edit-form">
-                <div class="form-group">
-                    <label for="manualId">Manual ID:</label>
-                    <input type="text" id="manualId">
-                </div>
-                <div class="form-group">
-                    <label for="jerseyId">Jersey ID:</label>
-                    <input type="text" id="jerseyId">
-                </div>
-                <button id="savePlayerDetails">Save</button>
-            </div>
+        <div class="popup-content"> <!-- **Ensure this div exists** -->
+            <span class="close">×</span>
+            <!-- Player edit form injected here by showEditPopup() -->
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Scripts -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
+    <script src="script.js"></script>
 
 </body>
 </html>

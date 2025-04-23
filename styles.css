@@ -1,171 +1,441 @@
-.video-player {
-    flex: 3;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    width: 100%;
-    height: 700px;
-    aspect-ratio: 16 / 9;
+/* General Layout */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f4f4f4; /* Light grey background */
 }
 
-/* Updated styles for better spacing */
-.input-layout-container {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.input-container,
-.video-player,
-.create-players,
-.basic-stats,
-.complete-pass,
-.incomplete-pass {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-/* General styling improvements for larger video player */
 .football-tagging-tool {
     display: flex;
-    gap: 20px;
-    padding: 0px;
+    padding: 15px; /* Padding around the whole tool */
     box-sizing: border-box;
-}
-
-.player-buttons-container {
-    display: flex;
-    flex-wrap: wrap; /* Allow buttons to wrap */
-    gap: 5px; /* Padding between player buttons */
-    padding-top: 10px;
+    max-width: 1800px; /* Max width for large screens */
+    margin: 10px auto; /* Center the tool */
 }
 
 .main-container {
-    flex: 3;
+    flex: 1; /* Take remaining space */
     display: flex;
     flex-direction: column;
+    gap: 15px; /* Space between sections */
 }
 
-.top-container {
-    flex: 3;
-    display: flex;
-    gap: 10px;
-}
-
-.sidebar-container {
-    flex: 0.25;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
+/* Basic Area Styling */
 .area {
-    border: 1px solid #ccc;
-    padding: 2px;
+    border: 1px solid #ddd; /* Lighter border */
+    padding: 15px; /* Default padding inside areas */
     border-radius: 5px;
-    overflow: auto;
+    background-color: #fff; /* White background for areas */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04); /* Subtle shadow */
 }
 
-.area h2 {
+/* Headings */
+.area h3, .area h4 {
     margin-top: 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #ccc;
-    font-size: 14px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    font-size: 1.1em;
+    color: #333;
+    border-bottom: 1px solid #eee;
+}
+.area h5 { /* Sub-sub-headings */
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 3px;
+    font-size: 0.95em;
+    color: #555;
+    border-bottom: 1px dotted #ddd;
 }
 
-.team-header {
-    display: flex;
-    align-items: center; /* Align items vertically in the center */
-    gap: 10px; /* Space between elements */
-}
+/* --- Layout: Full Width Video Top --- */
 
-.player-controls {
-    display: flex;
-    align-items: center;
-    gap: 5px; /* Space between player control buttons and span */
-}
-
-.layout-controls {
-    display: flex;
-    flex-direction: column; /* Align items vertically */
-    align-items: flex-start; /* Align items to the start for better spacing */
-    gap: 10px; /* Increase gap for better separation between elements */
-}
-
-.create-players {
-    background-color: #ffcccb;
-    display: flex;
-    flex-direction: row; /* Changed to row to align teams horizontally */
-    gap: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
+/* Video Player Full Width */
+.video-player-full-width {
+    width: 100%;
+    height: 70vh; /* 70% of viewport height */
+    min-height: 450px; /* Minimum sensible height */
+    background-color: #000;
+    position: relative; /* For highlight button */
+    margin-bottom: 15px; /* Space below video */
+    padding: 0; /* Override default area padding */
     border-radius: 5px;
+    overflow: hidden;
 }
 
-.create-players .team-section-container {
+#matchVideoPlayer { /* The div holding the YT player */
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.video-player-full-width .saveToHighlightsButton {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10; /* Ensure button is above video */
+    padding: 8px 15px;
+    background-color: #28a745; /* Bootstrap success green */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    cursor: pointer;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
+}
+.video-player-full-width .saveToHighlightsButton:hover {
+    background-color: #218838;
+    box-shadow: 0px 4px 7px rgba(0, 0, 0, 0.4);
+}
+.video-player-full-width .saveToHighlightsButton:active {
+     transform: scale(0.98); /* Click feedback */
+}
+
+/* Container for all controls below video */
+.controls-below-video {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between control sections */
+}
+
+/* Row containing Layout, Players, Actions */
+.controls-row {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 20px; /* Space between sections in the row */
+    align-items: stretch; /* Make sections in row same height */
+    background-color: #fff;
+    padding-bottom: 5px; /* Reduce bottom padding for row */
+}
+
+/* Layout Controls Section within the row */
+.layout-controls-section {
+    flex: 0 0 180px; /* Fixed width */
+    padding-right: 15px;
+    border-right: 1px solid #eee; /* Separator */
+}
+.layout-controls label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+.layout-controls input[type="radio"] {
+    margin-right: 5px;
+}
+
+/* Player Creation Section within the row */
+.create-players-section {
+    flex: 2; /* Take more space than layout */
+    min-width: 350px;
+    display: flex; /* Use flex for internal layout */
+    flex-direction: column;
+}
+.create-players-section h3 {
+    flex-shrink: 0; /* Prevent heading shrinking */
+}
+.horizontal-teams { /* Container for side-by-side teams */
+    display: flex;
+    gap: 15px;
+    flex-grow: 1; /* Allow team sections to grow */
+}
+.create-players-section .team-section {
+    flex: 1; /* Equal width */
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column; /* Stack header and buttons */
+}
+.create-players-section .team-header {
     display: flex;
     justify-content: space-between;
-    width: 100%;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
 }
-
-.create-players .team-section {
-    flex-basis: 48%;
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+.create-players-section .team-header h4 {
+    margin: 0;
+    font-size: 1em;
+    border: none;
+    padding: 0;
 }
-
-
-.basic-stats {
-    grid-column: 1 / span 2;
-    background-color: #ffffcc;
-    padding: 10px;
+.player-controls { /* Buttons +/- and count */
     display: flex;
-    flex-wrap: wrap; /* Allow buttons to wrap */
+    align-items: center;
     gap: 5px;
+    flex-shrink: 0;
+}
+.player-controls button {
+    padding: 3px 8px;
+    font-size: 1em;
+    line-height: 1;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.player-controls span {
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+    background-color: #e9ecef;
+    padding: 3px 5px;
+    border-radius: 3px;
+}
+.create-players-section .player-buttons-container {
+    flex-grow: 1; /* Allow button container to fill space */
+    overflow-y: auto; /* Scroll if needed */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 5px;
+    min-height: 60px; /* Ensure minimum height */
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: 3px;
+}
+/* Player Button Styling (General) */
+.player-button {
+    position: relative;
+    padding: 8px 12px 8px 10px;
+    font-size: 0.9em;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.1s ease;
+    min-width: 50px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.player-button:hover {
+    background-color: #dee2e6;
+    border-color: #adb5bd;
+}
+.player-button:active {
+     transform: scale(0.98);
+}
+.player-button .player-text {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.player-button .edit-icon {
+    font-size: 0.8em;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 2px;
+    line-height: 1;
+}
+.player-button .edit-icon:hover { color: #000; }
+.player-button.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    font-weight: bold;
+}
+.player-button.selected .edit-icon { color: #fff; }
+.player-button.opposition {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+.player-button.opposition.selected {
+    background-color: #dc3545;
+    border-color: #bd2130;
+    color: white;
+}
+
+
+/* Actions Section within the row */
+.actions-section {
+    flex: 3; /* Take most space */
+    min-width: 400px;
+    display: flex; /* Use flex for internal layout */
     flex-direction: column;
 }
+.actions-section h3 { flex-shrink: 0; } /* Prevent heading shrinking */
 
-.button-container {
-    grid-column: 1 / span 2;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 10px 0;
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-grow: 1; /* Allow grid to take space */
+    overflow-y: auto; /* Scroll if actions overflow */
+    padding-bottom: 5px; /* Space at bottom of grid */
+}
+.actions-section .action-section {
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+.actions-section .action-section h5 {
+    text-align: center;
+    font-size: 0.9em;
+    color: #444;
+}
+.actions-section .action-section button {
+    /* Button styling from previous version */
+     margin: 3px;
+     padding: 6px 10px; /* Adjusted padding */
+     font-size: 0.85em;
+     display: inline-block;
+     width: auto;
+     background-color: #e9ecef;
+     color: #495057;
+     border: 1px solid #ced4da;
+     border-radius: 4px;
+     cursor: pointer;
+     transition: background-color 0.2s, border-color 0.2s, transform 0.1s ease;
+}
+.actions-section .action-section button:hover {
+    background-color: #dee2e6;
+    border-color: #adb5bd;
+}
+.actions-section .action-section button:active {
+    transform: scale(0.97);
+}
+.actions-section .action-section button.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    font-weight: bold;
 }
 
-.text-box-container {
-    grid-column: 1 / span 2;
-    display: flex;
-    gap: 20px;
-    padding-top: 20px;
-}
 
-.text-box {
-    flex: 1;
-}
-
-.text-box h3 {
-    margin-top: 0;
-}
-
-textarea {
-    width: 100%;
-    height: 150px;
-    resize: vertical;
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
+.actions-section .log-action-button {
+    display: block;
+    width: 90%;
+    max-width: 350px;
+    margin: 15px auto 0 auto; /* Centered, space above */
+    padding: 10px 20px;
+    font-size: 1.05em;
+    font-weight: bold;
+    background-color: #28a745;
+    color: white;
+    border: none;
     border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s ease;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.actions-section .log-action-button:hover { background-color: #218838; }
+.actions-section .log-action-button:active { transform: scale(0.99); }
+
+
+/* Meta Data, Logs, Main Controls below */
+.meta-data,
+.text-box-container,
+.main-controls {
+    margin-top: 0; /* Reset top margin if added previously */
+}
+
+/* Meta Data Section */
+.input-layout-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+}
+.input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-grow: 1;
+    flex-basis: 300px;
+}
+.input-container label {
+    white-space: nowrap;
+    font-size: 0.9em;
+    color: #555;
+}
+.input-container input[type="text"] {
+    padding: 9px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95em;
+    flex-grow: 1;
+    min-width: 180px;
+}
+.input-container button,
+.meta-data button {
+    padding: 9px 18px;
+    font-size: 0.95em;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.input-container button:hover,
+.meta-data button:hover { background-color: #5a6268; }
+
+/* Text Boxes */
+.text-box-container {
+    display: flex;
+    gap: 20px;
+}
+.text-box {
+    flex: 1; /* Equal width */
+    padding: 15px; /* Use default area padding */
+}
+.text-box textarea {
+    width: 100%;
+    height: 180px; /* Log height */
+    resize: vertical;
+    padding: 12px;
+    font-size: 0.9em;
+    font-family: monospace;
+    line-height: 1.5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     box-sizing: border-box;
 }
+.text-box textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
 
+/* Main Controls Buttons (Undo, Calculate) */
+.button-container.main-controls {
+    display: flex;
+    justify-content: flex-start;
+    gap: 15px;
+    align-items: center; /* Align heading and buttons */
+    padding: 10px 15px; /* Adjust padding */
+}
+.main-controls h3 { margin-right: auto; } /* Push buttons right */
+
+.button-container.main-controls button {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: 500;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+#undoButton { background-color: #ffc107; color: #333; }
+#undoButton:hover { background-color: #e0a800; }
+#calculateStats { background-color: #17a2b8; color: white; }
+#calculateStats:hover { background-color: #138496; }
+
+
+/* Popups */
 .popup {
     display: none;
     position: fixed;
@@ -173,330 +443,465 @@ textarea {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.65);
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .popup-content {
     background-color: white;
-    padding: 20px;
-    border-radius: 5px;
+    padding: 30px;
+    border-radius: 8px;
     position: relative;
-    width: 80%;
-    max-width: 500px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: popupFadeIn 0.3s ease-out;
+}
+@keyframes popupFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .close {
     position: absolute;
-    right: 10px;
-    top: 10px;
-    font-size: 24px;
+    right: 15px;
+    top: 15px;
+    font-size: 2em;
+    font-weight: bold;
+    line-height: 1;
     cursor: pointer;
-    color: #666;
+    color: #aaa;
+    transition: color 0.2s;
+}
+.close:hover { color: #000; }
+
+.popup h2 { /* Popup Title */
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.4em;
+    color: #333;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
 }
 
-.edit-form {
+.edit-form, .highlights-form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 20px;
+    gap: 20px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
 }
-
 .form-group label {
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 0.95em;
+    color: #555;
 }
-
-.form-group input {
-    padding: 8px;
+.form-group input[type="text"],
+.form-group textarea {
+    padding: 10px 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+}
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 14px;
-    background-color: #4CAF50;
-    color: white;
+.edit-form button,
+.popup-buttons button {
+    padding: 12px 25px;
+    font-size: 1em;
+    font-weight: 500;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.1s ease;
+    margin-top: 15px;
 }
-
-button:hover {
-    background-color: #45a049;
-}
-
-.player-button.selected {
+.edit-form button {
     background-color: #007bff;
     color: white;
-    outline: 3px solid #004a99;
 }
+.edit-form button:hover { background-color: #0056b3; }
 
-.green-tick {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 100px;
-    color: rgb(255, 255, 255);
-    animation: fadeInOut 1s ease-in-out;
-    background-color: rgba(0, 128, 0, 0.8); /* Green background with slight transparency */
-    padding: 20px;
-    border-radius: 10px; /* Rounded corners */
-}
-
-.stats-popup {
+.popup-buttons {
     display: flex;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.stats-popup.full-screen {
-    background-color: white;
-}
-
-.stats-popup-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    position: relative;
-    width: 80%;
-    max-width: 900px;
-    max-height: 80vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.stats-popup.full-screen .stats-popup-content {
-    width: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    border-radius: 0;
-    padding: 0;
-}
-
-.stats-popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-}
-
-.stats-popup-header h2 {
-    margin: 0;
-}
-
-.close-button {
-    font-size: 32px;
-    cursor: pointer;
-    color: #666;
-}
-
-.stats-container {
-    flex-grow: 1;
-    overflow-x: auto;
-    padding-top: 20px;
-}
-
-.stats-container table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.stats-container th, .stats-container td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.stats-container th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-}
-
-.stats-container td {
-    vertical-align: middle;
-}
-
-.stats-popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-}
-
-.download-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 5px;
-    font-size: 14px;
-    transition: background-color 0.3s;
-}
-
-.download-button:hover {
-    background-color: #45a049;
-}
-
-.input-layout-container {
-    display: flex;
-    gap: 20px; /* Adjust as needed for spacing */
-    align-items: center;
-}
-
-
-.input-container,
-.video-player,
-.create-players,
-.basic-stats,
-.complete-pass,
-.incomplete-pass {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-/* Update for areas inside sidebar */
-.area {
-    margin-bottom: 0;
-}
-
-/* Highlights popup specific styles */
-.highlights-popup-content {
-    width: 90%;
-    max-width: 800px;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.highlights-form {
-    display: flex;
-    flex-direction: column;
+    justify-content: flex-end;
     gap: 15px;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
+.popup-buttons button#saveHighlights { background-color: #28a745; color: white; }
+.popup-buttons button#saveHighlights:hover { background-color: #218838; }
+.popup-buttons button#cancelHighlights { background-color: #6c757d; color: white; }
+.popup-buttons button#cancelHighlights:hover { background-color: #5a6268; }
+.popup-buttons button:active { transform: scale(0.98); }
 
-.highlights-form input,
-.highlights-form textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
 
+/* Highlights Popup Specific */
+.highlights-popup-content { max-width: 750px; }
 .highlights-players {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin: 15px 0;
+    gap: 12px;
+    margin-top: 5px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
 }
-
-.player-checkbox {
-    display: none;
-}
-
+.player-checkbox { display: none; }
 .player-checkbox + label {
     display: inline-block;
-    padding: 8px 16px;
-    background-color: #e0e0e0;
-    border-radius: 4px;
+    padding: 7px 14px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 15px;
     cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.1s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-
+.player-checkbox + label:hover { background-color: #f0f0f0; border-color: #ccc; }
 .player-checkbox:checked + label {
     background-color: #007bff;
     color: white;
+    border-color: #0056b3;
+    box-shadow: 0 1px 3px rgba(0, 123, 255, 0.3);
 }
 
-#logTimestampButton {
-    font-size: 0.75rem; /* Smaller font */
-    padding: 4px 8px;
-    background-color: #f0f0f0;
-    color: #555;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    opacity: 0.8;
-}
-
-.form-group p {
-    font-style: italic;
-    font-size: 0.85rem; /* Smaller text */
-    color: grey;
-    margin-bottom: 8px; /* Optional spacing */
-}
-
-.saveToHighlightsButton {
-    position: absolute;
-    top: 30px;
-    right: 170px;
-    z-index: 10;
-    padding: 10px 20px;
-    background-color: #4CAF50; /* Blue background */
+/* Green Tick Confirmation */
+.green-tick {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1em;
     color: white;
-    border: none;
+    background-color: rgba(40, 167, 69, 0.9);
+    padding: 12px 20px;
     border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Shadow for visibility */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    z-index: 2000;
+    text-align: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    white-space: normal;
+    max-width: 80%;
+    animation: tickFadeInOut 1.5s ease-in-out;
+}
+@keyframes tickFadeInOut {
+  0% { opacity: 0; transform: translate(-50%, 20px); }
+  20% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px);}
 }
 
-.saveToHighlightsButton:hover {
-    background-color: #0056b3; /* Slightly darker blue on hover */
-    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on hover */
-}
 
-.teamNameInput {
-    background-color: white;
-    color: black;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 14px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Shadow for visibility */
-    outline: none; /* Remove default outline */
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.teamNameInput:focus {
-    border-color: #007BFF; /* Blue border on focus */
-    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.5); /* More pronounced shadow on focus */
-}
-
-.area.meta-data {
+/* Stats Popup */
+.stats-popup { z-index: 1001; /* Above regular popups */}
+.stats-popup.full-screen .popup-content {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    padding: 0;
     display: flex;
-    flex-wrap: wrap; /* Allows wrapping if needed for smaller screens */
-    gap: 20px; /* Optional: Adds spacing between the containers */
-    align-items: flex-start; /* Align containers at the top */
+    flex-direction: column;
+    animation: none;
 }
 
-.input-layout-container {
-    flex: 1; /* Distribute available space equally */
-    min-width: 300px; /* Optional: Set a minimum width for smaller screens */
-    padding: 10px; /* Add some padding for better spacing */
-    background-color: #f9f9f9; /* Optional: Light background for distinction */
-    border: 1px solid #ddd; /* Optional: Border for better visibility */
-    border-radius: 5px; /* Optional: Rounded corners */
+.stats-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    border-bottom: 1px solid #ddd;
+    background-color: #f8f9fa;
+    flex-shrink: 0;
 }
+.stats-popup-header h2 {
+    margin: 0;
+    font-size: 1.3em;
+    border: none;
+    padding: 0;
+}
+.stats-popup-header .download-button {
+    background-color: #17a2b8;
+    color: white;
+    padding: 9px 18px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.95em;
+    transition: background-color 0.3s;
+    border: none;
+    cursor: pointer;
+    margin-left: auto;
+    margin-right: 20px;
+}
+.stats-popup-header .download-button:hover { background-color: #138496; }
+.stats-popup-header .close-button {
+    font-size: 2em;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+    padding: 5px;
+    transition: color 0.2s;
+}
+.stats-popup-header .close-button:hover { color: #000; }
+
+.stats-container {
+    flex-grow: 1;
+    overflow: auto;
+    padding: 25px;
+}
+.stats-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.stats-container table:last-child { margin-bottom: 0; }
+.stats-container th, .stats-container td {
+    padding: 10px 14px;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.stats-container td:nth-child(2), .stats-container th:nth-child(2) { /* Allow Player Name to wrap */
+     white-space: normal;
+}
+.stats-container th {
+    background-color: #f1f3f5;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.stats-container tr:nth-child(even) td { background-color: #f8f9fa; }
+.stats-container tr:hover td { background-color: #e9ecef; }
+.stats-container p { /* Warning */
+    color: #dc3545;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}
+
+/* Remove styles from previous layouts if they were defined */
+.sidebar-container { display: none; }
+.controls-area { display: none; } /* Hide the old right-side controls area */
+/* Reset any specific styles for .full-width-actions if they conflict */
+.actions-container.full-width-actions { /* Reset if needed */
+   /* display: block; */
+}
+
+/* --- Layout Adjustments for Wide Layout with Side-by-Side Panels --- */
+
+/* Basic Reset/Defaults */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f0f0f0; /* Lighter grey background */
+}
+.football-tagging-tool {
+    max-width: 95%; /* Allow wider layout */
+    margin: 10px auto;
+}
+.main-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Reduced gap between main sections */
+}
+.area {
+    border: 1px solid #ddd;
+    padding: 10px; /* Reduced default padding */
+    border-radius: 4px;
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.area.no-padding { padding: 0; } /* Utility class */
+
+h3 { font-size: 1.1em; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #eee;}
+h4 { font-size: 1.0em; margin-bottom: 8px; }
+h5 { font-size: 0.9em; color: #444; margin-bottom: 5px; text-align: center; }
+
+/* Video Player Full Width */
+.video-player-full-width {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* Use aspect ratio */
+    max-height: 65vh; /* Limit max height */
+    min-height: 400px;
+    background-color: #000;
+    position: relative;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+#matchVideoPlayer { width: 100%; height: 100%; border: none; }
+.video-player-full-width .saveToHighlightsButton { /* Position remains same */
+    /* ... styles from previous version ... */
+    position: absolute; top: 10px; right: 10px; z-index: 10; padding: 6px 12px; font-size: 0.85em;
+}
+
+/* Container for Panels Below Video */
+.panels-below-video {
+    display: flex;
+    gap: 10px; /* Gap between Player and Action panels */
+    align-items: stretch; /* Make panels equal height */
+    min-height: 250px; /* Ensure minimum height */
+    background-color: #f8f9fa; /* Light background for the panel area */
+}
+
+/* General Panel Styling */
+.panel {
+    flex: 1; /* Start with equal width */
+    display: flex;
+    flex-direction: column; /* Stack content vertically */
+    overflow: hidden; /* Prevent content spilling out (shouldn't happen with no-scroll) */
+}
+
+/* Player Panel (Left) */
+.player-panel {
+    flex-basis: 45%; /* Give slightly less space than actions initially */
+    /* background-color: #e9f5ff; */ /* Optional distinct bg */
+}
+.layout-controls-inline {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #ccc;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.layout-controls-inline label { font-size: 0.85em; }
+.layout-controls-inline input { margin-right: 3px; }
+
+.player-panel .horizontal-teams {
+    display: flex;
+    gap: 10px;
+    flex-grow: 1; /* Allow teams container to fill space */
+}
+.player-panel .team-section {
+    flex: 1; /* Equal width teams */
+    padding: 8px;
+    background-color: #fff; /* White background for team box */
+    border: 1px solid #eee;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+}
+.player-panel .team-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+.player-panel .team-header h4 { font-size: 0.9em; margin: 0; border: none; padding: 0; }
+.player-panel .player-controls { gap: 4px; }
+.player-panel .player-controls button { padding: 2px 6px; font-size: 0.9em; }
+.player-panel .player-controls span { padding: 2px 4px; font-size: 0.9em; }
+
+.player-buttons-container.no-scroll {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 4px; /* Reduced gap */
+    align-content: flex-start; /* Align wrapped lines to top */
+    /* CRITICAL: NO max-height, NO overflow: auto */
+    flex-grow: 1; /* Allow to expand */
+    padding: 4px;
+}
+.player-buttons-container.no-scroll .player-button {
+    /* Make buttons potentially smaller */
+    padding: 4px 8px 4px 6px;
+    font-size: 0.8em;
+    min-width: 40px;
+    gap: 3px;
+}
+.player-buttons-container.no-scroll .player-button .edit-icon { font-size: 0.75em; padding: 1px;}
+
+
+/* Action Panel (Right) */
+.action-panel {
+    flex-basis: 55%; /* Give slightly more space */
+    /* background-color: #fff3e0; */ /* Optional distinct bg */
+}
+.actions-wrapper.no-scroll {
+    display: flex; /* Can use flex or grid */
+    flex-wrap: wrap; /* Allow sections to wrap */
+    gap: 8px; /* Gap between action sections */
+    align-content: flex-start;
+    align-items: flex-start; /* Align sections top */
+    /* CRITICAL: NO max-height, NO overflow: auto */
+    flex-grow: 1; /* Allow to expand */
+    padding: 5px;
+}
+.action-panel .action-section {
+    padding: 6px;
+    background-color: #fdfdfd;
+    border: 1px solid #eee;
+    border-radius: 3px;
+    /* Adjust flex-basis if using flex for wrapping sections */
+    flex: 1 1 150px; /* Allow sections to grow/shrink with a base */
+}
+.action-panel .action-section h5 { font-size: 0.85em; margin-bottom: 5px; border-bottom: none;}
+
+.action-panel .action-section button {
+    /* Make buttons smaller */
+    margin: 2px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    /* Keep selected style */
+}
+.action-panel .action-section button.selected { /* Selected style */
+    background-color: #007bff; color: white; border-color: #0056b3; font-weight: bold;
+}
+
+.action-panel .log-action-button {
+    padding: 8px 15px;
+    font-size: 0.95em;
+    margin-top: 8px; /* Space above log button */
+    width: 100%; /* Full width within panel */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Meta Data, Logs, Main Controls below */
+.meta-data,
+.text-box-container,
+.main-controls {
+    /* Existing styles should be mostly ok */
+}
+.text-box-container { gap: 10px; }
+.text-box textarea { height: 150px; font-size: 0.85em;}
+.main-controls { padding: 8px 10px; }
+.main-controls button { padding: 8px 15px; font-size: 0.9em; }
+
+
+/* --- Popups, Stats, Green Tick (Mostly unchanged) --- */
+/* --- Keep popup styles, stats styles, green tick styles --- */
+
+/* Remove styles from previous layouts */
+.controls-below-video > .controls-row { display: none; } /* Hide old row if present */
+.sidebar-container, .controls-area { display: none; } /* Hide layouts 2 & 3 */
