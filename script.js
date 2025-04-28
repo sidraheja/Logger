@@ -1256,6 +1256,16 @@ document.addEventListener('keydown', (event) => {
     } else if (event.key === 'ArrowLeft') { // Seek Backward
         event.preventDefault();
         seekVideo(-3); // Seek backward 3 seconds
+    } else if (event.key.toUpperCase() === 'S') { // Log Action Hotkey
+        event.preventDefault(); // Prevent typing 's' if accidentally focused elsewhere
+        console.log("Log Action hotkey ('S') pressed.");
+        // Find the button and click it
+        const logButton = document.getElementById('logActionButton');
+        if (logButton) {
+            logButton.click(); // Programmatically click the button
+        } else {
+            console.error("Log Action button not found for hotkey.");
+        }
     }
 });
 
