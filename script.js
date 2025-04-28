@@ -324,6 +324,9 @@ function updatePlayerButtonText(button) {
             case 'jersey':
                 displayText = details.jerseyId || 'N/A';
                 break;
+            case 'name':
+                displayText = details.playerName || 'N/A';
+                break;
             // 'pid' case falls through to default
         }
         textSpan.textContent = displayText;
