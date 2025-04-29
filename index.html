@@ -11,55 +11,53 @@
         <div class="main-container">
 
             <!-- Video Player (Full Width Top) -->
-            <section class="area video-player-full-width no-padding"> <!-- Added no-padding -->
+            <section class="area video-player-full-width no-padding">
                 <div id="matchVideoPlayer"></div>
                 <button class="saveToHighlightsButton" id="saveToHighlightsButton">Save Highlight (H)</button>
             </section>
 
             <!-- Container for Player & Action Panels Below Video -->
-            <div class="panels-below-video area no-padding"> <!-- Combined Panel Area -->
+            <div class="panels-below-video area no-padding">
 
                 <!-- Player Selection Panel (Left) -->
                 <section class="panel player-panel area">
-                    <h3>Players</h3>
-                    <div class="layout-controls-inline"> <!-- Layout controls within player panel -->
-                        <label><input type="radio" name="layout" value="pid" checked> PID</label>
-                        <label><input type="radio" name="layout" value="manual"> Manual</label>
-                        <label><input type="radio" name="layout" value="jersey"> Jersey</label>
-                        <label><input type="radio" name="layout" value="name"> Name </label>
-                    </div>
-                    <div class="team-section-container horizontal-teams">
-                        <div class="team-section team-a">
-                            <div class="team-header">
-                                <h4 id="team-a-name"> Team A</h4>
-                                <div class="player-controls">
-                                    <button id="addTeamAPlayer" class="add-player">+</button>
-                                    <span id="teamAPlayerCount">0</span>
-                                    <button id="removeTeamAPlayer" class="remove-player">-</button>
-                                </div>
-                            </div>
-                            <!-- IMPORTANT: Container MUST expand, NO scroll -->
-                            <div id="teamAPlayerButtons" class="player-buttons-container no-scroll"></div>
-                        </div>
-                        <div class="team-section team-b">
-                            <div class="team-header">
-                                <h4 id="team-b-name"> Team B</h4>
-                                <div class="player-controls">
-                                    <button id="addTeamBPlayer" class="add-player">+</button>
-                                    <span id="teamBPlayerCount">0</span>
-                                    <button id="removeTeamBPlayer" class="remove-player">-</button>
-                                </div>
-                            </div>
-                             <!-- IMPORTANT: Container MUST expand, NO scroll -->
-                            <div id="teamBPlayerButtons" class="player-buttons-container no-scroll"></div>
-                        </div>
-                    </div>
+                   <!-- ... Player Panel content remains the same ... -->
+                   <h3>Players</h3>
+                   <div class="layout-controls-inline">
+                       <label><input type="radio" name="layout" value="pid" checked> PID</label>
+                       <label><input type="radio" name="layout" value="manual"> Manual</label>
+                       <label><input type="radio" name="layout" value="jersey"> Jersey</label>
+                       <label><input type="radio" name="layout" value="name"> Name</label>
+                   </div>
+                   <div class="team-section-container horizontal-teams">
+                       <div class="team-section team-a">
+                           <div class="team-header">
+                               <h4 id="team-a-name"> Team A</h4>
+                               <div class="player-controls">
+                                   <button id="addTeamAPlayer" class="add-player">+</button>
+                                   <span id="teamAPlayerCount">0</span>
+                                   <button id="removeTeamAPlayer" class="remove-player">-</button>
+                               </div>
+                           </div>
+                           <div id="teamAPlayerButtons" class="player-buttons-container no-scroll"></div>
+                       </div>
+                       <div class="team-section team-b">
+                           <div class="team-header">
+                               <h4 id="team-b-name"> Team B</h4>
+                               <div class="player-controls">
+                                   <button id="addTeamBPlayer" class="add-player">+</button>
+                                   <span id="teamBPlayerCount">0</span>
+                                   <button id="removeTeamBPlayer" class="remove-player">-</button>
+                               </div>
+                           </div>
+                           <div id="teamBPlayerButtons" class="player-buttons-container no-scroll"></div>
+                       </div>
+                   </div>
                 </section>
 
                 <!-- Action Button Panel (Right) -->
                 <section class="panel action-panel area">
                     <h3>Actions</h3>
-                     <!-- IMPORTANT: Container MUST expand, NO scroll -->
                     <div class="actions-wrapper no-scroll">
                         <div class="action-section attack-actions">
                             <h5>Attack</h5>
@@ -77,6 +75,7 @@
                             <h5>Defense</h5>
                             <button id="defensiveActionBtn">Defensive Action</button>
                             <button id="clearanceBtn">Clearance</button>
+                            <button id="ownGoalBtn">Own Goal</button> <!-- Added Own Goal -->
                         </div>
                         <div class="action-section gk-actions">
                             <h5>GK</h5>
@@ -90,6 +89,7 @@
                             <button id="freeKickBtn">Free kick</button>
                             <button id="penaltyBtn">Penalty</button>
                             <button id="outOfBoundsBtn">Out of Bounds</button>
+                            <button id="offsideBtn">Offside</button> <!-- Added Offside -->
                         </div>
                         <div class="action-section special-actions">
                             <h5>Special</h5>
@@ -99,44 +99,46 @@
                             <button id="aerialDuelBtn">Aerial Duel</button>
                         </div>
                     </div>
-                     <!-- Log button outside the scroll wrapper if wrapper scrolled -->
-                     <button id="logActionButton" class="log-action-button">Log Action (Hotkey = 'S')</button>
+                     <button id="logActionButton" class="log-action-button">Log Action</button>
                 </section>
 
             </div> <!-- End Panels Below Video -->
 
             <!-- Meta Data -->
             <section class="area meta-data">
-                <h3>Match & Video Setup</h3>
-                <div class="input-layout-container">
-                    <div class="input-container video-control">
-                        <label for="youtubeVideoIdInput">YouTube Video ID:</label>
-                        <input type="text" id="youtubeVideoIdInput" placeholder="Enter YouTube Video ID">
-                        <button id="updateYoutubeVideoButton">Update Video</button>
-                    </div>
-                    <div class="input-container match-control">
-                        <button id="setMatchDetails">Set Match Details</button>
-                    </div>
-                </div>
+                 <!-- ... Meta Data content remains the same ... -->
+                 <h3>Match & Video Setup</h3>
+                 <div class="input-layout-container">
+                     <div class="input-container video-control">
+                         <label for="youtubeVideoIdInput">YouTube Video ID:</label>
+                         <input type="text" id="youtubeVideoIdInput" placeholder="Enter YouTube Video ID">
+                         <button id="updateYoutubeVideoButton">Update Video</button>
+                     </div>
+                     <div class="input-container match-control">
+                         <button id="setMatchDetails">Set Match Details</button>
+                     </div>
+                 </div>
             </section>
 
             <!-- Logs -->
             <div class="text-box-container">
-                <div class="text-box area">
-                    <h3>Game Log</h3>
-                    <textarea id="gameLogTextBox"></textarea>
-                </div>
-                <div class="text-box area">
-                    <h3>Game Highlights</h3>
-                    <textarea id="gameHighlightsTextBox"></textarea>
-                </div>
+                 <!-- ... Logs content remains the same ... -->
+                 <div class="text-box area">
+                     <h3>Game Log</h3>
+                     <textarea id="gameLogTextBox"></textarea>
+                 </div>
+                 <div class="text-box area">
+                     <h3>Game Highlights</h3>
+                     <textarea id="gameHighlightsTextBox"></textarea>
+                 </div>
             </div>
 
             <!-- Main Controls -->
             <div class="button-container main-controls area">
-                <h3>Controls</h3>
-                <button id="undoButton">Undo Last Log</button>
-                <button id="calculateStats">Calculate Stats (Old Format)</button>
+                 <!-- ... Main Controls content remains the same ... -->
+                 <h3>Controls</h3>
+                 <button id="undoButton">Undo Last Log</button>
+                 <button id="calculateStats">Calculate Stats (Old Format)</button>
             </div>
 
         </div> <!-- End Main Container -->
@@ -144,16 +146,15 @@
 
     <!-- Popups -->
     <div id="popup" class="popup">
-        <div class="popup-content"> <!-- General popup content area -->
+        <div class="popup-content">
             <span class="close">×</span>
-            <div id="popupContent"></div> <!-- Specific content injected here -->
+            <div id="popupContent"></div>
         </div>
     </div>
-
     <div id="playerEditPopup" class="popup">
-        <div class="popup-content"> <!-- **Ensure this div exists** -->
+        <div class="popup-content">
             <span class="close">×</span>
-            <!-- Player edit form injected here by showEditPopup() -->
+            <!-- Player edit form injected here -->
         </div>
     </div>
 

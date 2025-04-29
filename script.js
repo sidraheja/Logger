@@ -75,13 +75,13 @@ const primaryActionButtons = [
     // Attack
     'passBtn', 'longPassBtn', 'throughBallBtn', 'shotBallBtn', 'crossBtn', 'dribbleAttemptBtn', 'miscontrolBtn', 'noActionBtn', 'goalBtn',
     // Defense
-    'defensiveActionBtn', 'clearanceBtn',
+    'defensiveActionBtn', 'clearanceBtn', 'ownGoalBtn',
     // GK
     'saveBtn', 'catchBtn', 'punchBtn'
 ];
 
 const setPieceButtons = [
-    'cornerBtn', 'freeKickBtn', 'penaltyBtn', 'outOfBoundsBtn'
+    'cornerBtn', 'freeKickBtn', 'penaltyBtn', 'outOfBoundsBtn', 'offsideBtn'
 ];
 
 const specialButtons = [
